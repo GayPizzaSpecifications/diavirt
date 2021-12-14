@@ -19,9 +19,9 @@ class DAVirtualMachine: NSObject, VZVirtualMachineDelegate {
     func create() throws {
         let config = try configuration.build()
         try config.validate()
-        let vm = VZVirtualMachine(configuration: config)
-        vm.delegate = self
-        machine = vm
+        let machine = VZVirtualMachine(configuration: config)
+        machine.delegate = self
+        self.machine = machine
     }
 
     func start() {
@@ -60,9 +60,7 @@ class DAVirtualMachine: NSObject, VZVirtualMachineDelegate {
     func virtualMachine(_: VZVirtualMachine, didStopWithError _: Error) {}
 
     func stop() throws {
-        if let vm = machine {
-            try vm.requestStop()
-        }
+        try machine?.requestStop()
     }
 
     func write<T: Codable>(_ event: T) {
