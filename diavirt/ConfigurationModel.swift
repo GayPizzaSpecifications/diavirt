@@ -12,6 +12,7 @@ struct DAVirtualMachineConfiguration: Codable {
     let cpuCoreCount: Int
     let memorySizeInBytes: UInt64
     let bootLoader: DABootLoader
+    let platform: DAPlatform
     let storageDevices: [DAStorageDevice]?
     let serialPorts: [DASerialPort]?
     let entropyDevices: [DAEntropyDevice]?
@@ -29,6 +30,12 @@ struct DALinuxBootLoader: Codable {
     let initialRamdiskPath: String?
     let commandLine: String?
 }
+
+struct DAPlatform: Codable {
+    let genericPlatform: DAGenericPlatform?
+}
+
+struct DAGenericPlatform: Codable {}
 
 struct DAStorageDevice: Codable {
     let diskImageAttachment: DADiskImageAttachment?

@@ -12,6 +12,7 @@ extension DAVirtualMachineConfiguration {
     func build() throws -> VZVirtualMachineConfiguration {
         let configuration = VZVirtualMachineConfiguration()
         try bootLoader.apply(to: configuration)
+        try platform.apply(to: configuration)
         configuration.cpuCount = cpuCoreCount
         configuration.memorySize = memorySizeInBytes
 
@@ -36,6 +37,12 @@ extension DAVirtualMachineConfiguration {
         if let memoryBalloonDevices = memoryBalloonDevices {
             for memoryBalloonDevice in memoryBalloonDevices {
                 configuration.memoryBalloonDevices.append(try memoryBalloonDevice.build())
+            }
+        }
+
+        if let networkDevices = networkDevices {
+            for networkDevice in networkDevices {
+                configuration.networkDevices.append(try networkDevice.build())
             }
         }
 
@@ -71,6 +78,20 @@ extension DALinuxBootLoader {
             bootloader.commandLine = commandLine
         }
         return bootloader
+    }
+}
+
+extension DAPlatform {
+    func apply(to configuration: VZVirtualMachineConfiguration) throws {
+        if let genericPlatform = genericPlatform {
+            configuration.platform = try genericPlatform.build()
+        }
+    }
+}
+
+extension DAGenericPlatform {
+    func build() throws -> VZGenericPlatformConfiguration {
+        VZGenericPlatformConfiguration()
     }
 }
 

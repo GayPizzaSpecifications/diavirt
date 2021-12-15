@@ -10,6 +10,9 @@ diavirt takes in a configuration file which describes how to build up the virtua
 {
   "cpuCoreCount": 2,
   "memorySizeInBytes": 2147483648,
+  "platform": {
+    "genericPlatform": {}
+  },
   "bootLoader": {
     "linuxBootLoader": {
       "kernelFilePath": "vmlinux",
