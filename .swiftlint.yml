@@ -5,4 +5,5 @@ disabled_rules:
 - trailing_comma
 - nesting
 - large_tuple
+- cyclomatic_complexity
 line_length: 190
