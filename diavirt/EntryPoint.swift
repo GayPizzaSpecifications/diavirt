@@ -32,7 +32,7 @@ struct DiavirtCommand: ParsableCommand {
         let configuration = try decoder.decode(DAVirtualMachineConfiguration.self, from: data)
         Global.machine = DAVirtualMachine(configuration, enableWireProtocol: wireProtocol)
         try Global.machine!.create()
-        Global.stateTimerHandle = Global.machine!.watchForState { state in
+        Global.stateObserverHandle = Global.machine!.watchForState { state in
             if state == .error {
                 DiavirtCommand.exit(withError: ExitCode.failure)
             } else if state == .stopped {
@@ -41,7 +41,7 @@ struct DiavirtCommand: ParsableCommand {
         }
 
         atexit {
-            Global.stateTimerHandle?.cancel()
+            Global.stateObserverHandle?.invalidate()
         }
 
         signal(SIGINT) { _ in
@@ -64,6 +64,6 @@ struct DiavirtCommand: ParsableCommand {
 
     enum Global {
         static var machine: DAVirtualMachine?
-        static var stateTimerHandle: DispatchSourceTimer?
+        static var stateObserverHandle: NSKeyValueObservation?
     }
 }

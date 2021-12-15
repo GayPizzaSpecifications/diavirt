@@ -38,29 +38,21 @@ class DAVirtualMachine: NSObject, VZVirtualMachineDelegate {
         }
     }
 
-    func watchForState(stateHandler: @escaping (VZVirtualMachine.State) -> Void) -> DispatchSourceTimer {
-        let timer = DispatchSource.makeTimerSource(queue: DispatchQueue.global(qos: .background))
-        timer.schedule(deadline: .now(), repeating: .milliseconds(10))
-
-        var lastMachineState: VZVirtualMachine.State = .stopped
-        timer.setEventHandler {
-            guard let machine = self.machine else {
-                return
-            }
-            let currentState = machine.state
-            if currentState != lastMachineState {
-                self.writeProtocolMessage(StateEvent(self.stateToString(currentState)))
-                stateHandler(currentState)
-                lastMachineState = currentState
-            }
+    func watchForState(stateHandler: @escaping (VZVirtualMachine.State) -> Void) -> NSKeyValueObservation {
+        machine!.observe(\.state) { machine, _ in
+            let state = machine.state
+            self.writeProtocolMessage(StateEvent(self.stateToString(state)))
+            stateHandler(state)
         }
-        timer.resume()
-        return timer
     }
 
-    func guestDidStop(_: VZVirtualMachine) {}
+    func guestDidStop(_: VZVirtualMachine) {
+        writeProtocolMessage(SimpleEvent(type: "guest-stopped"))
+    }
 
-    func virtualMachine(_: VZVirtualMachine, didStopWithError _: Error) {}
+    func virtualMachine(_: VZVirtualMachine, didStopWithError error: Error) {
+        writeProtocolMessage(ErrorEvent(error))
+    }
 
     func stop() throws {
         try machine?.requestStop()
