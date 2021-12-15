@@ -19,6 +19,7 @@ struct DAVirtualMachineConfiguration: Codable {
     let memoryBalloonDevices: [DAMemoryBalloonDevice]?
     let networkDevices: [DANetworkDevice]?
     let graphicsDevices: [DAGraphicsDevice]?
+    let directorySharingDevices: [DADirectorySharingDevice]?
 }
 
 struct DABootLoader: Codable {
@@ -98,4 +99,31 @@ struct DAMacGraphicsDisplay: Codable {
     let widthInPixels: Int
     let heightInPixels: Int
     let pixelsPerInch: Int
+}
+
+struct DADirectorySharingDevice: Codable {
+    let virtioFileSystemDevice: DAVirtioFileSystemDevice?
+    let directoryShare: DADirectoryShare
+}
+
+struct DAVirtioFileSystemDevice: Codable {
+    let tag: String
+}
+
+struct DADirectoryShare: Codable {
+    let singleDirectoryShare: DASingleDirectoryShare?
+    let multipleDirectoryShare: DAMultipleDirectoryShare?
+}
+
+struct DASingleDirectoryShare: Codable {
+    let directory: DASharedDirectory
+}
+
+struct DAMultipleDirectoryShare: Codable {
+    let directories: [String: DASharedDirectory]
+}
+
+struct DASharedDirectory: Codable {
+    let path: String
+    let isReadOnly: Bool?
 }

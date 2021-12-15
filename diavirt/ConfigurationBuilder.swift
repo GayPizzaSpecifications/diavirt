@@ -52,6 +52,12 @@ extension DAVirtualMachineConfiguration {
             }
         }
 
+        if let directorySharingDevices = directorySharingDevices {
+            for directorySharingDevice in directorySharingDevices {
+                configuration.directorySharingDevices.append(try directorySharingDevice.build())
+            }
+        }
+
         return configuration
     }
 }
@@ -263,5 +269,59 @@ extension DAMacGraphicsDisplay {
         VZMacGraphicsDisplayConfiguration(widthInPixels: widthInPixels,
                                           heightInPixels: heightInPixels,
                                           pixelsPerInch: pixelsPerInch)
+    }
+}
+
+extension DADirectorySharingDevice {
+    func build() throws -> VZDirectorySharingDeviceConfiguration {
+        let share = try directoryShare.build()
+        var device: VZDirectorySharingDeviceConfiguration?
+        if let virtioFileSystemDevice = virtioFileSystemDevice {
+            let fileSystemDevice = try virtioFileSystemDevice.build()
+            fileSystemDevice.share = share
+            device = fileSystemDevice
+        }
+        return device!
+    }
+}
+
+extension DAVirtioFileSystemDevice {
+    func build() throws -> VZVirtioFileSystemDeviceConfiguration {
+        VZVirtioFileSystemDeviceConfiguration(tag: tag)
+    }
+}
+
+extension DADirectoryShare {
+    func build() throws -> VZDirectoryShare {
+        var share: VZDirectoryShare?
+        if let singleDirectoryShare = singleDirectoryShare {
+            share = try singleDirectoryShare.build()
+        }
+
+        if let multipleDirectoryShare = multipleDirectoryShare {
+            share = try multipleDirectoryShare.build()
+        }
+
+        return share!
+    }
+}
+
+extension DASingleDirectoryShare {
+    func build() throws -> VZSingleDirectoryShare {
+        VZSingleDirectoryShare(directory: try directory.build())
+    }
+}
+
+extension DAMultipleDirectoryShare {
+    func build() throws -> VZMultipleDirectoryShare {
+        let shares = try directories.mapValues { directory in try directory.build() }
+        return VZMultipleDirectoryShare(directories: shares)
+    }
+}
+
+extension DASharedDirectory {
+    func build() throws -> VZSharedDirectory {
+        let url = URL(fileURLWithPath: path)
+        return VZSharedDirectory(url: url, readOnly: isReadOnly ?? false)
     }
 }

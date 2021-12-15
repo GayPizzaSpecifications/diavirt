@@ -49,6 +49,20 @@ diavirt takes in a configuration file which describes how to build up the virtua
       "natNetworkAttachment": {},
       "virtioNetworkDevice": {}
     }
+  ],
+  "directorySharingDevices": [
+    {
+      "virtioFileSystemDevice": {
+        "tag": "mac-users"
+      },
+      "directoryShare": {
+        "singleDirectoryShare": {
+          "directory": {
+            "path": "/Users"
+          }
+        }
+      }
+    }
   ]
 }
 ```
