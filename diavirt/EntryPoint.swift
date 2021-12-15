@@ -20,14 +20,17 @@ struct DiavirtCommand: ParsableCommand {
     var configFilePath: String = "vm.json"
 
     @Flag(name: .shortAndLong, help: "Enable Viewer Mode")
-    var viewer: Bool = false
+    var viewerMode: Bool = false
+
+    @Flag(name: .shortAndLong, help: "Enable Wire Protocol")
+    var wireProtocol: Bool = false
 
     func run() throws {
         let configFileURL = URL(fileURLWithPath: configFilePath)
         let data = try Data(contentsOf: configFileURL)
         let decoder = JSONDecoder()
         let configuration = try decoder.decode(DAVirtualMachineConfiguration.self, from: data)
-        Global.machine = DAVirtualMachine(configuration)
+        Global.machine = DAVirtualMachine(configuration, enableWireProtocol: wireProtocol)
         try Global.machine!.create()
         Global.stateTimerHandle = Global.machine!.watchForState { state in
             if state == .error {
@@ -42,7 +45,7 @@ struct DiavirtCommand: ParsableCommand {
         }
 
         signal(SIGINT) { _ in
-            Global.machine!.write(SimpleEvent(type: "killed"))
+            Global.machine!.writeProtocolMessage(SimpleEvent(type: "killed"))
             DispatchQueue.main.async {
                 DiavirtCommand.exit(withError: ExitCode.success)
             }
@@ -52,7 +55,8 @@ struct DiavirtCommand: ParsableCommand {
             Global.machine?.start()
         }
 
-        if viewer {
+        if viewerMode {
+            NSApplication.shared.setActivationPolicy(.regular)
             DiavirtApp.main()
         }
         dispatchMain()

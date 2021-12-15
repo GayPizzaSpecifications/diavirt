@@ -1,0 +1,190 @@
+//
+//  ConfigurationBuilder.swift
+//  diavirt
+//
+//  Created by Kenneth Endfinger on 12/14/21.
+//
+
+import Foundation
+import Virtualization
+
+extension DAVirtualMachineConfiguration {
+    func build() throws -> VZVirtualMachineConfiguration {
+        let configuration = VZVirtualMachineConfiguration()
+        try bootLoader.apply(to: configuration)
+        configuration.cpuCount = cpuCoreCount
+        configuration.memorySize = memorySizeInBytes
+
+        if let storageDevices = storageDevices {
+            for storageDevice in storageDevices {
+                configuration.storageDevices.append(try storageDevice.build())
+            }
+        }
+
+        if let serialPorts = serialPorts {
+            for serialPort in serialPorts {
+                configuration.serialPorts.append(try serialPort.build())
+            }
+        }
+
+        if let entropyDevices = entropyDevices {
+            for entropyDevice in entropyDevices {
+                configuration.entropyDevices.append(try entropyDevice.build())
+            }
+        }
+
+        if let memoryBalloonDevices = memoryBalloonDevices {
+            for memoryBalloonDevice in memoryBalloonDevices {
+                configuration.memoryBalloonDevices.append(try memoryBalloonDevice.build())
+            }
+        }
+
+        return configuration
+    }
+}
+
+extension DABootLoader {
+    func apply(to configuration: VZVirtualMachineConfiguration) throws {
+        if let linux = linuxBootLoader {
+            configuration.bootLoader = linux.build()
+        }
+    }
+}
+
+extension DALinuxBootLoader {
+    func build() -> VZLinuxBootLoader {
+        let kernelURL = URL(fileURLWithPath: kernelFilePath).absoluteURL
+        let bootloader = VZLinuxBootLoader(kernelURL: kernelURL)
+
+        if let initialRamdiskPath = initialRamdiskPath {
+            let initialRamdiskURL = URL(fileURLWithPath: initialRamdiskPath).absoluteURL
+            bootloader.initialRamdiskURL = initialRamdiskURL
+        }
+
+        if let commandLine = commandLine {
+            bootloader.commandLine = commandLine
+        }
+        return bootloader
+    }
+}
+
+extension DAStorageDevice {
+    func build() throws -> VZStorageDeviceConfiguration {
+        var attachment: VZStorageDeviceAttachment?
+        var storage: VZStorageDeviceConfiguration?
+
+        if let diskImageAttachment = diskImageAttachment {
+            attachment = try diskImageAttachment.build()
+        }
+
+        if let virtioBlockDevice = virtioBlockDevice {
+            storage = try virtioBlockDevice.build(attachment: attachment!)
+        }
+        return storage!
+    }
+}
+
+extension DADiskImageAttachment {
+    func build() throws -> VZDiskImageStorageDeviceAttachment {
+        let url = URL(fileURLWithPath: imageFilePath).absoluteURL
+        let readOnly = isReadOnly ?? false
+        return try VZDiskImageStorageDeviceAttachment(url: url, readOnly: readOnly)
+    }
+}
+
+extension DAVirtioBlockDevice {
+    func build(attachment: VZStorageDeviceAttachment) throws -> VZStorageDeviceConfiguration {
+        VZVirtioBlockDeviceConfiguration(attachment: attachment)
+    }
+}
+
+extension DASerialPort {
+    func build() throws -> VZSerialPortConfiguration {
+        var attachment: VZSerialPortAttachment?
+        var port: VZSerialPortConfiguration?
+
+        if let stdioSerialAttachment = stdioSerialAttachment {
+            attachment = try stdioSerialAttachment.build()
+        }
+
+        if let virtioConsoleDevice = virtioConsoleDevice {
+            port = try virtioConsoleDevice.build()
+        }
+
+        port?.attachment = attachment!
+        return port!
+    }
+}
+
+extension DAStdioSerialAttachment {
+    func build() throws -> VZFileHandleSerialPortAttachment {
+        VZFileHandleSerialPortAttachment(
+            fileHandleForReading: FileHandle.standardInput,
+            fileHandleForWriting: FileHandle.standardOutput
+        )
+    }
+}
+
+extension DAVirtioConsoleDevice {
+    func build() throws -> VZVirtioConsoleDeviceSerialPortConfiguration {
+        VZVirtioConsoleDeviceSerialPortConfiguration()
+    }
+}
+
+extension DAEntropyDevice {
+    func build() throws -> VZEntropyDeviceConfiguration {
+        (try virtioEntropyDevice?.build())!
+    }
+}
+
+extension DAVirtioEntropyDevice {
+    func build() throws -> VZVirtioEntropyDeviceConfiguration {
+        VZVirtioEntropyDeviceConfiguration()
+    }
+}
+
+extension DAMemoryBalloonDevice {
+    func build() throws -> VZMemoryBalloonDeviceConfiguration {
+        (try virtioTraditionalMemoryBalloonDevice?.build())!
+    }
+}
+
+extension DAVirtioTraditionalMemoryBalloonDevice {
+    func build() throws -> VZVirtioTraditionalMemoryBalloonDeviceConfiguration {
+        VZVirtioTraditionalMemoryBalloonDeviceConfiguration()
+    }
+}
+
+extension DANetworkDevice {
+    func build() throws -> VZNetworkDeviceConfiguration {
+        var attachment: VZNetworkDeviceAttachment?
+        var device: VZNetworkDeviceConfiguration?
+
+        if let natNetworkAttachment = natNetworkAttachment {
+            attachment = try natNetworkAttachment.build()
+        }
+
+        if let virtioNetworkDevice = virtioNetworkDevice {
+            device = try virtioNetworkDevice.build()
+        }
+
+        device?.attachment = attachment
+        return device!
+    }
+}
+
+extension DANATNetworkAttachment {
+    func build() throws -> VZNATNetworkDeviceAttachment {
+        VZNATNetworkDeviceAttachment()
+    }
+}
+
+extension DAVirtioNetworkDevice {
+    func build() throws -> VZVirtioNetworkDeviceConfiguration {
+        let device = VZVirtioNetworkDeviceConfiguration()
+        if let macAddress = macAddress {
+            device.macAddress = VZMACAddress(string: macAddress)!
+        }
+        return device
+    }
+}

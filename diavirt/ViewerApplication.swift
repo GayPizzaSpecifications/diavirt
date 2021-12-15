@@ -40,9 +40,3 @@ struct VirtualMachineView: NSViewRepresentable {
         view.virtualMachine = virtualMachine
     }
 }
-
-class AppDelegate: NSObject, NSApplicationDelegate {
-    func applicationDidFinishLaunching(_: Notification) {
-        print("LAUNCH")
-    }
-}

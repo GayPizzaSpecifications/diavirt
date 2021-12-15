@@ -10,10 +10,13 @@ import Virtualization
 
 class DAVirtualMachine: NSObject, VZVirtualMachineDelegate {
     let configuration: DAVirtualMachineConfiguration
+    let enableWireProtocol: Bool
+
     var machine: VZVirtualMachine?
 
-    init(_ configuration: DAVirtualMachineConfiguration) {
+    init(_ configuration: DAVirtualMachineConfiguration, enableWireProtocol: Bool) {
         self.configuration = configuration
+        self.enableWireProtocol = enableWireProtocol
     }
 
     func create() throws {
@@ -28,9 +31,9 @@ class DAVirtualMachine: NSObject, VZVirtualMachineDelegate {
         machine!.start { result in
             switch result {
             case .success:
-                self.write(SimpleEvent(type: "started"))
+                self.writeProtocolMessage(SimpleEvent(type: "started"))
             case let .failure(error):
-                self.write(ErrorEvent(error))
+                self.writeProtocolMessage(ErrorEvent(error))
             }
         }
     }
@@ -46,7 +49,7 @@ class DAVirtualMachine: NSObject, VZVirtualMachineDelegate {
             }
             let currentState = machine.state
             if currentState != lastMachineState {
-                self.write(StateEvent(self.stateToString(currentState)))
+                self.writeProtocolMessage(StateEvent(self.stateToString(currentState)))
                 stateHandler(currentState)
                 lastMachineState = currentState
             }
@@ -63,7 +66,11 @@ class DAVirtualMachine: NSObject, VZVirtualMachineDelegate {
         try machine?.requestStop()
     }
 
-    func write<T: Codable>(_ event: T) {
+    func writeProtocolMessage<T: Codable>(_ event: T) {
+        if !enableWireProtocol {
+            return
+        }
+
         var data = try! encoder.encode(event)
         data.append(0x0A)
         DispatchQueue.main.async {

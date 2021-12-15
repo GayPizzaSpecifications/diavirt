@@ -10,11 +10,11 @@ diavirt takes in a configuration file which describes how to build up the virtua
 {
   "cpuCoreCount": 2,
   "memorySizeInBytes": 2147483648,
-  "bootloader": {
-    "linux": {
+  "bootLoader": {
+    "linuxBootLoader": {
       "kernelFilePath": "vmlinux",
       "initialRamdiskPath": "initrd",
-      "commandLine": "earlycon console=hvc0 root=/dev/vda1"
+      "commandLine": "console=hvc0 root=/dev/vda1"
     }
   },
   "serialPorts": [
@@ -34,6 +34,17 @@ diavirt takes in a configuration file which describes how to build up the virtua
   "entropyDevices": [
     {
       "virtioEntropyDevice": {}
+    }
+  ],
+  "memoryBalloonDevices": [
+    {
+      "virtioTraditionalMemoryBalloonDevice": {}
+    }
+  ],
+  "networkDevices": [
+    {
+      "natNetworkAttachment": {},
+      "virtioNetworkDevice": {}
     }
   ]
 }
