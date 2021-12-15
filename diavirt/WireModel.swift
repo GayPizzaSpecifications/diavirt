@@ -13,7 +13,8 @@ protocol WireEvent: Codable {
 
 protocol WireProtocol {
     func writeProtocolEvent<T: WireEvent>(_ event: T)
-    func trackDataPipe(_ pipe: Pipe, tag: String)
+    func trackInputPipe(_ pipe: Pipe, tag: String)
+    func trackOutputPipe(_ pipe: Pipe, tag: String)
 }
 
 struct SimpleEvent: WireEvent {

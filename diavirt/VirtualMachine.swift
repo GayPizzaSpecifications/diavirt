@@ -13,7 +13,8 @@ class DAVirtualMachine: NSObject, WireProtocol, VZVirtualMachineDelegate {
     let enableWireProtocol: Bool
 
     var machine: VZVirtualMachine?
-    var pipes: [String: Pipe] = [:]
+    var inputs: [String: Pipe] = [:]
+    var outputs: [String: Pipe] = [:]
 
     init(_ configuration: DAVirtualMachineConfiguration, enableWireProtocol: Bool) {
         self.configuration = configuration
@@ -47,8 +48,12 @@ class DAVirtualMachine: NSObject, WireProtocol, VZVirtualMachineDelegate {
         }
     }
 
-    func trackDataPipe(_ pipe: Pipe, tag _: String) {
-        pipes.append(pipe)
+    func trackInputPipe(_ pipe: Pipe, tag: String) {
+        inputs[tag] = pipe
+    }
+
+    func trackOutputPipe(_ pipe: Pipe, tag: String) {
+        outputs[tag] = pipe
     }
 
     func guestDidStop(_: VZVirtualMachine) {

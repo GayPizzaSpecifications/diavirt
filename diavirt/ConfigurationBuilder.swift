@@ -165,9 +165,9 @@ extension DAStdioSerialAttachment {
 extension DAWireSerialAttachment {
     func build(wire: WireProtocol) throws -> VZFileHandleSerialPortAttachment {
         let serialInputPipe = Pipe()
-        wire.trackDataPipe(serialInputPipe, tag: "\(tag).input")
+        wire.trackInputPipe(serialInputPipe, tag: tag)
         let serialOutputPipe = Pipe()
-        wire.trackDataPipe(serialOutputPipe, tag: "\(tag).output")
+        wire.trackOutputPipe(serialOutputPipe, tag: tag)
         serialOutputPipe.fileHandleForReading.readabilityHandler = { handle in
             let data = handle.availableData
             wire.writeProtocolEvent(PipeDataEvent(tag: tag, data: data))
