@@ -51,10 +51,15 @@ struct DAVirtioBlockDevice: Codable {}
 
 struct DASerialPort: Codable {
     let stdioSerialAttachment: DAStdioSerialAttachment?
+    let wireSerialAttachment: DAWireSerialAttachment?
     let virtioConsoleDevice: DAVirtioConsoleDevice?
 }
 
 struct DAStdioSerialAttachment: Codable {}
+
+struct DAWireSerialAttachment: Codable {
+    let tag: String
+}
 
 struct DAVirtioConsoleDevice: Codable {}
 

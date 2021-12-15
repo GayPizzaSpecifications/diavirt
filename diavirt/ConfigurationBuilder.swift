@@ -9,7 +9,7 @@ import Foundation
 import Virtualization
 
 extension DAVirtualMachineConfiguration {
-    func build() throws -> VZVirtualMachineConfiguration {
+    func build(wire: WireProtocol) throws -> VZVirtualMachineConfiguration {
         let configuration = VZVirtualMachineConfiguration()
         try bootLoader.apply(to: configuration)
         try platform.apply(to: configuration)
@@ -24,7 +24,7 @@ extension DAVirtualMachineConfiguration {
 
         if let serialPorts = serialPorts {
             for serialPort in serialPorts {
-                configuration.serialPorts.append(try serialPort.build())
+                configuration.serialPorts.append(try serialPort.build(wire: wire))
             }
         }
 
@@ -126,12 +126,16 @@ extension DAVirtioBlockDevice {
 }
 
 extension DASerialPort {
-    func build() throws -> VZSerialPortConfiguration {
+    func build(wire: WireProtocol) throws -> VZSerialPortConfiguration {
         var attachment: VZSerialPortAttachment?
         var port: VZSerialPortConfiguration?
 
         if let stdioSerialAttachment = stdioSerialAttachment {
             attachment = try stdioSerialAttachment.build()
+        }
+
+        if let wireSerialAttachment = wireSerialAttachment {
+            attachment = try wireSerialAttachment.build(wire: wire)
         }
 
         if let virtioConsoleDevice = virtioConsoleDevice {
@@ -154,6 +158,23 @@ extension DAStdioSerialAttachment {
         return VZFileHandleSerialPortAttachment(
             fileHandleForReading: FileHandle.standardInput,
             fileHandleForWriting: FileHandle.standardOutput
+        )
+    }
+}
+
+extension DAWireSerialAttachment {
+    func build(wire: WireProtocol) throws -> VZFileHandleSerialPortAttachment {
+        let serialInputPipe = Pipe()
+        wire.trackDataPipe(serialInputPipe, tag: "\(tag).input")
+        let serialOutputPipe = Pipe()
+        wire.trackDataPipe(serialOutputPipe, tag: "\(tag).output")
+        serialOutputPipe.fileHandleForReading.readabilityHandler = { handle in
+            let data = handle.availableData
+            wire.writeProtocolEvent(PipeDataEvent(tag: tag, data: data))
+        }
+        return VZFileHandleSerialPortAttachment(
+            fileHandleForReading: serialInputPipe.fileHandleForReading,
+            fileHandleForWriting: serialOutputPipe.fileHandleForWriting
         )
     }
 }

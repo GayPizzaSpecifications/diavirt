@@ -11,6 +11,11 @@ protocol WireEvent: Codable {
     var type: String { get }
 }
 
+protocol WireProtocol {
+    func writeProtocolEvent<T: WireEvent>(_ event: T)
+    func trackDataPipe(_ pipe: Pipe, tag: String)
+}
+
 struct SimpleEvent: WireEvent {
     var type: String
 
@@ -34,5 +39,16 @@ struct ErrorEvent: WireEvent {
 
     init(_ error: Error) {
         self.error = error.localizedDescription
+    }
+}
+
+struct PipeDataEvent: WireEvent {
+    var type: String = "data"
+    let tag: String
+    let data: Data
+
+    init(tag: String, data: Data) {
+        self.tag = tag
+        self.data = data
     }
 }

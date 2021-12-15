@@ -8,11 +8,12 @@
 import Foundation
 import Virtualization
 
-class DAVirtualMachine: NSObject, VZVirtualMachineDelegate {
+class DAVirtualMachine: NSObject, WireProtocol, VZVirtualMachineDelegate {
     let configuration: DAVirtualMachineConfiguration
     let enableWireProtocol: Bool
 
     var machine: VZVirtualMachine?
+    var pipes: [String: Pipe] = [:]
 
     init(_ configuration: DAVirtualMachineConfiguration, enableWireProtocol: Bool) {
         self.configuration = configuration
@@ -20,7 +21,7 @@ class DAVirtualMachine: NSObject, VZVirtualMachineDelegate {
     }
 
     func create() throws {
-        let config = try configuration.build()
+        let config = try configuration.build(wire: self)
         try config.validate()
         let machine = VZVirtualMachine(configuration: config)
         machine.delegate = self
@@ -31,9 +32,9 @@ class DAVirtualMachine: NSObject, VZVirtualMachineDelegate {
         machine!.start { result in
             switch result {
             case .success:
-                self.writeProtocolMessage(SimpleEvent(type: "started"))
+                self.writeProtocolEvent(SimpleEvent(type: "started"))
             case let .failure(error):
-                self.writeProtocolMessage(ErrorEvent(error))
+                self.writeProtocolEvent(ErrorEvent(error))
             }
         }
     }
@@ -41,24 +42,28 @@ class DAVirtualMachine: NSObject, VZVirtualMachineDelegate {
     func watchForState(stateHandler: @escaping (VZVirtualMachine.State) -> Void) -> NSKeyValueObservation {
         machine!.observe(\.state) { machine, _ in
             let state = machine.state
-            self.writeProtocolMessage(StateEvent(self.stateToString(state)))
+            self.writeProtocolEvent(StateEvent(self.stateToString(state)))
             stateHandler(state)
         }
     }
 
+    func trackDataPipe(_ pipe: Pipe, tag _: String) {
+        pipes.append(pipe)
+    }
+
     func guestDidStop(_: VZVirtualMachine) {
-        writeProtocolMessage(SimpleEvent(type: "guest-stopped"))
+        writeProtocolEvent(SimpleEvent(type: "guest-stopped"))
     }
 
     func virtualMachine(_: VZVirtualMachine, didStopWithError error: Error) {
-        writeProtocolMessage(ErrorEvent(error))
+        writeProtocolEvent(ErrorEvent(error))
     }
 
     func stop() throws {
         try machine?.requestStop()
     }
 
-    func writeProtocolMessage<T: Codable>(_ event: T) {
+    func writeProtocolEvent<T>(_ event: T) where T: WireEvent {
         if !enableWireProtocol {
             return
         }

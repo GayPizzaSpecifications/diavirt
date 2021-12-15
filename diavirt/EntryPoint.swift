@@ -45,7 +45,7 @@ struct DiavirtCommand: ParsableCommand {
         }
 
         signal(SIGINT) { _ in
-            Global.machine!.writeProtocolMessage(SimpleEvent(type: "killed"))
+            Global.machine!.writeProtocolEvent(SimpleEvent(type: "killed"))
             DispatchQueue.main.async {
                 DiavirtCommand.exit(withError: ExitCode.success)
             }
