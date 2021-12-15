@@ -17,6 +17,7 @@ struct DAVirtualMachineConfiguration: Codable {
     let entropyDevices: [DAEntropyDevice]?
     let memoryBalloonDevices: [DAMemoryBalloonDevice]?
     let networkDevices: [DANetworkDevice]?
+    let graphicsDevices: [DAGraphicsDevice]?
 }
 
 struct DABootLoader: Codable {
@@ -72,3 +73,17 @@ struct DAVirtioNetworkDevice: Codable {
 }
 
 struct DANATNetworkAttachment: Codable {}
+
+struct DAGraphicsDevice: Codable {
+    let macGraphicsDevice: DAMacGraphicsDevice?
+}
+
+struct DAMacGraphicsDevice: Codable {
+    let displays: [DAMacGraphicsDisplay]
+}
+
+struct DAMacGraphicsDisplay: Codable {
+    let widthInPixels: Int
+    let heightInPixels: Int
+    let pixelsPerInch: Int
+}

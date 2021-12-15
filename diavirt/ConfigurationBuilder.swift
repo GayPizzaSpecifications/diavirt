@@ -39,6 +39,12 @@ extension DAVirtualMachineConfiguration {
             }
         }
 
+        if let graphicsDevices = graphicsDevices {
+            for graphicsDevice in graphicsDevices {
+                configuration.graphicsDevices.append(try graphicsDevice.build())
+            }
+        }
+
         return configuration
     }
 }
@@ -118,7 +124,13 @@ extension DASerialPort {
 
 extension DAStdioSerialAttachment {
     func build() throws -> VZFileHandleSerialPortAttachment {
-        VZFileHandleSerialPortAttachment(
+        var attributes = termios()
+        tcgetattr(FileHandle.standardInput.fileDescriptor, &attributes)
+        attributes.c_iflag &= ~tcflag_t(ICRNL)
+        attributes.c_lflag &= ~tcflag_t(ICANON | ECHO)
+        tcsetattr(FileHandle.standardInput.fileDescriptor, TCSANOW, &attributes)
+
+        return VZFileHandleSerialPortAttachment(
             fileHandleForReading: FileHandle.standardInput,
             fileHandleForWriting: FileHandle.standardOutput
         )
@@ -186,5 +198,28 @@ extension DAVirtioNetworkDevice {
             device.macAddress = VZMACAddress(string: macAddress)!
         }
         return device
+    }
+}
+
+extension DAGraphicsDevice {
+    func build() throws -> VZGraphicsDeviceConfiguration {
+        (try macGraphicsDevice?.build())!
+    }
+}
+
+extension DAMacGraphicsDevice {
+    func build() throws -> VZMacGraphicsDeviceConfiguration {
+        let device = VZMacGraphicsDeviceConfiguration()
+        let displays = try displays.map { display in try display.build() }
+        device.displays = displays
+        return device
+    }
+}
+
+extension DAMacGraphicsDisplay {
+    func build() throws -> VZMacGraphicsDisplayConfiguration {
+        VZMacGraphicsDisplayConfiguration(widthInPixels: widthInPixels,
+                                          heightInPixels: heightInPixels,
+                                          pixelsPerInch: pixelsPerInch)
     }
 }

@@ -61,7 +61,7 @@
             isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
-            argument = "--viewer"
+            argument = "--viewer-mode"
             isEnabled = "YES">
          </CommandLineArgument>
       </CommandLineArguments>
