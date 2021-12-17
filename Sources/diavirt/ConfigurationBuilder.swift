@@ -58,6 +58,7 @@ extension DAVirtualMachineConfiguration {
             }
         }
 
+        try configuration.validate()
         return configuration
     }
 }
