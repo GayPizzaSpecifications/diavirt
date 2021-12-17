@@ -9,7 +9,6 @@ import ArgumentParser
 import Foundation
 import Virtualization
 
-@main
 struct DiavirtCommand: ParsableCommand {
     static var configuration = CommandConfiguration(
         commandName: "diavirt",

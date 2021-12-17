@@ -7,9 +7,9 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v2
       - name: Build Executable
-        run: xcodebuild archive -configuration Release -scheme diavirt -archivePath XcodeOutput CODE_SIGN_IDENTITY= CODE_SIGNING_REQUIRED=NO
+        run: swift build -c release --arch arm64 --arch x86_64
       - name: Copy Executable
-        run: cp XcodeOutput.xcarchive/Products/usr/local/bin/diavirt diavirt
+        run: cp .build/apple/Products/Release/diavirt diavirt
       - name: Archive Executable
         uses: actions/upload-artifact@v2
         with:
@@ -21,11 +21,11 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v2
       - name: Swift Format
-        run: swiftformat --lint .
+        run: swiftformat --lint Package.swift Sources
   lint:
     runs-on: macos-11
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
       - name: Swift Lint
-        run: swiftlint .
+        run: swiftlint Package.swift Sources

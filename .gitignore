@@ -1,3 +1,4 @@
+## Custom Stuff
 /work
 
 # Xcode
@@ -26,3 +27,13 @@ DerivedData/
 
 ## Gcc Patch
 /*.gcno
+
+## Swift Package Manager
+/.build
+DerivedData/
+.swiftpm/xcode/package.xcworkspace/contents.xcworkspacedata
+.swiftpm/xcode/xcshareddata/xcschemes/*.xcscheme
+
+## Other IDEs
+.idea/
+.vscode/
