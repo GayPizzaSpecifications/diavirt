@@ -58,6 +58,12 @@ extension DAVirtualMachineConfiguration {
             }
         }
 
+        if let socketDevices = socketDevices {
+            for socketDevice in socketDevices {
+                configuration.socketDevices.append(try socketDevice.build())
+            }
+        }
+
         try configuration.validate()
         return configuration
     }
@@ -324,5 +330,23 @@ extension DASharedDirectory {
     func build() throws -> VZSharedDirectory {
         let url = URL(fileURLWithPath: path)
         return VZSharedDirectory(url: url, readOnly: isReadOnly ?? false)
+    }
+}
+
+extension DASocketDevice {
+    func build() throws -> VZSocketDeviceConfiguration {
+        var device: VZSocketDeviceConfiguration?
+
+        if let virtioSocketDevice = virtioSocketDevice {
+            device = try virtioSocketDevice.build()
+        }
+
+        return device!
+    }
+}
+
+extension DAVirtioSocketDevice {
+    func build() throws -> VZVirtioSocketDeviceConfiguration {
+        VZVirtioSocketDeviceConfiguration()
     }
 }

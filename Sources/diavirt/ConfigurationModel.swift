@@ -20,6 +20,7 @@ struct DAVirtualMachineConfiguration: Codable {
     let networkDevices: [DANetworkDevice]?
     let graphicsDevices: [DAGraphicsDevice]?
     let directorySharingDevices: [DADirectorySharingDevice]?
+    let socketDevices: [DASocketDevice]?
 }
 
 struct DABootLoader: Codable {
@@ -127,3 +128,9 @@ struct DASharedDirectory: Codable {
     let path: String
     let isReadOnly: Bool?
 }
+
+struct DASocketDevice: Codable {
+    let virtioSocketDevice: DAVirtioSocketDevice?
+}
+
+struct DAVirtioSocketDevice: Codable {}
