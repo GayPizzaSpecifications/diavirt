@@ -58,8 +58,8 @@
 			children = (
 				2A3190CB2769733800D4B154 /* LICENSE */,
 				2A3190CC2769733D00D4B154 /* README.md */,
-				2A2A9C7027678B000006C500 /* diavirt */,
 				2A2A9C6F27678B000006C500 /* Products */,
+				2ACB7340276C8A7700DCB577 /* Sources */,
 			);
 			sourceTree = "<group>";
 		};
@@ -83,6 +83,14 @@
 				2A4EEF092768FC7300E7FA9F /* WireModel.swift */,
 			);
 			path = diavirt;
+			sourceTree = "<group>";
+		};
+		2ACB7340276C8A7700DCB577 /* Sources */ = {
+			isa = PBXGroup;
+			children = (
+				2A2A9C7027678B000006C500 /* diavirt */,
+			);
+			path = Sources;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -279,7 +287,7 @@
 		2A2A9C7627678B000006C500 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CODE_SIGN_ENTITLEMENTS = diavirt/diavirt.entitlements;
+				CODE_SIGN_ENTITLEMENTS = Sources/diavirt/diavirt.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 3FQW5YTQR8;
@@ -294,7 +302,7 @@
 		2A2A9C7727678B000006C500 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CODE_SIGN_ENTITLEMENTS = diavirt/diavirt.entitlements;
+				CODE_SIGN_ENTITLEMENTS = Sources/diavirt/diavirt.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 3FQW5YTQR8;
