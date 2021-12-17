@@ -22,6 +22,7 @@ struct DAVirtualMachineConfiguration: Codable {
     let directorySharingDevices: [DADirectorySharingDevice]?
     let socketDevices: [DASocketDevice]?
     let keyboardDevices: [DAKeyboardDevice]?
+    let pointingDevices: [DAPointingDevice]?
 }
 
 struct DABootLoader: Codable {
@@ -141,3 +142,9 @@ struct DAKeyboardDevice: Codable {
 }
 
 struct DAUSBKeyboardDevice: Codable {}
+
+struct DAPointingDevice: Codable {
+    let usbScreenCoordinatePointingDevice: DAUSBScreenCoordinatePointingDevice?
+}
+
+struct DAUSBScreenCoordinatePointingDevice: Codable {}

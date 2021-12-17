@@ -70,6 +70,12 @@ extension DAVirtualMachineConfiguration {
             }
         }
 
+        if let pointingDevices = pointingDevices {
+            for pointingDevice in pointingDevices {
+                configuration.pointingDevices.append(try pointingDevice.build())
+            }
+        }
+
         try configuration.validate()
         return configuration
     }
@@ -372,5 +378,23 @@ extension DAKeyboardDevice {
 extension DAUSBKeyboardDevice {
     func build() throws -> VZUSBKeyboardConfiguration {
         VZUSBKeyboardConfiguration()
+    }
+}
+
+extension DAPointingDevice {
+    func build() throws -> VZPointingDeviceConfiguration {
+        var device: VZPointingDeviceConfiguration?
+
+        if let usbScreenCoordinatePointingDevice = usbScreenCoordinatePointingDevice {
+            device = try usbScreenCoordinatePointingDevice.build()
+        }
+
+        return device!
+    }
+}
+
+extension DAUSBScreenCoordinatePointingDevice {
+    func build() throws -> VZUSBScreenCoordinatePointingDeviceConfiguration {
+        VZUSBScreenCoordinatePointingDeviceConfiguration()
     }
 }
