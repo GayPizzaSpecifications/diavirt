@@ -64,6 +64,12 @@ extension DAVirtualMachineConfiguration {
             }
         }
 
+        if let keyboardDevices = keyboardDevices {
+            for keyboardDevice in keyboardDevices {
+                configuration.keyboards.append(try keyboardDevice.build())
+            }
+        }
+
         try configuration.validate()
         return configuration
     }
@@ -348,5 +354,23 @@ extension DASocketDevice {
 extension DAVirtioSocketDevice {
     func build() throws -> VZVirtioSocketDeviceConfiguration {
         VZVirtioSocketDeviceConfiguration()
+    }
+}
+
+extension DAKeyboardDevice {
+    func build() throws -> VZKeyboardConfiguration {
+        var device: VZKeyboardConfiguration?
+
+        if let usbKeyboardDevice = usbKeyboardDevice {
+            device = try usbKeyboardDevice.build()
+        }
+
+        return device!
+    }
+}
+
+extension DAUSBKeyboardDevice {
+    func build() throws -> VZUSBKeyboardConfiguration {
+        VZUSBKeyboardConfiguration()
     }
 }

@@ -21,6 +21,7 @@ struct DAVirtualMachineConfiguration: Codable {
     let graphicsDevices: [DAGraphicsDevice]?
     let directorySharingDevices: [DADirectorySharingDevice]?
     let socketDevices: [DASocketDevice]?
+    let keyboardDevices: [DAKeyboardDevice]?
 }
 
 struct DABootLoader: Codable {
@@ -134,3 +135,9 @@ struct DASocketDevice: Codable {
 }
 
 struct DAVirtioSocketDevice: Codable {}
+
+struct DAKeyboardDevice: Codable {
+    let usbKeyboardDevice: DAUSBKeyboardDevice?
+}
+
+struct DAUSBKeyboardDevice: Codable {}
