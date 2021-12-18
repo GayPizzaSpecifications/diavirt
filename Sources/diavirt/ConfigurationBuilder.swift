@@ -156,7 +156,7 @@ extension DASerialPort {
         var port: VZSerialPortConfiguration?
 
         if let stdioSerialAttachment = stdioSerialAttachment {
-            attachment = try stdioSerialAttachment.build()
+            attachment = try stdioSerialAttachment.build(wire: wire)
         }
 
         if let wireSerialAttachment = wireSerialAttachment {
@@ -173,15 +173,27 @@ extension DASerialPort {
 }
 
 extension DAStdioSerialAttachment {
-    func build() throws -> VZFileHandleSerialPortAttachment {
+    func build(wire: WireProtocol) throws -> VZFileHandleSerialPortAttachment {
         var attributes = termios()
         tcgetattr(FileHandle.standardInput.fileDescriptor, &attributes)
         attributes.c_iflag &= ~tcflag_t(ICRNL)
         attributes.c_lflag &= ~tcflag_t(ICANON | ECHO)
         tcsetattr(FileHandle.standardInput.fileDescriptor, TCSANOW, &attributes)
 
+        let stdinWritePipe = Pipe()
+        wire.trackOutputPipe(stdinWritePipe, tag: "stdin")
+
+        FileHandle.standardInput.readabilityHandler = { handle in
+            let data = handle.availableData
+            do {
+                try stdinWritePipe.fileHandleForWriting.write(contentsOf: data)
+            } catch {
+                wire.writeProtocolEvent(ErrorEvent(error))
+            }
+        }
+
         return VZFileHandleSerialPortAttachment(
-            fileHandleForReading: FileHandle.standardInput,
+            fileHandleForReading: stdinWritePipe.fileHandleForReading,
             fileHandleForWriting: FileHandle.standardOutput
         )
     }

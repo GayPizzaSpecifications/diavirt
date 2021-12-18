@@ -80,6 +80,16 @@ class DAVirtualMachine: NSObject, WireProtocol, VZVirtualMachineDelegate {
         }
     }
 
+    func writeStdinDataSafe(_ data: Data) {
+        if let maybeStdinPipe = outputs["stdin"] {
+            do {
+                try maybeStdinPipe.fileHandleForWriting.write(contentsOf: data)
+            } catch {
+                writeProtocolEvent(ErrorEvent(error))
+            }
+        }
+    }
+
     private let encoder = JSONEncoder()
 
     func stateToString(_ state: VZVirtualMachine.State) -> String {

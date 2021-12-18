@@ -25,6 +25,9 @@ struct DiavirtCommand: ParsableCommand {
     @Flag(name: .shortAndLong, help: "Enable Wire Protocol")
     var wireProtocol: Bool = false
 
+    @Flag(name: .long, help: "Enable Passing of Signals to VM")
+    var enableSignalPassing: Bool = false
+
     func run() throws {
         let configFileURL = URL(fileURLWithPath: configFilePath)
         let data = try Data(contentsOf: configFileURL)
@@ -40,14 +43,26 @@ struct DiavirtCommand: ParsableCommand {
             }
         }
 
+        Global.enableSignalPassing = enableSignalPassing
+
         atexit {
             Global.stateObserverHandle?.invalidate()
         }
 
         signal(SIGINT) { _ in
-            Global.machine!.writeProtocolEvent(SimpleEvent(type: "killed"))
-            DispatchQueue.main.async {
-                DiavirtCommand.exit(withError: ExitCode.success)
+            if Global.enableSignalPassing {
+                Global.machine?.writeStdinDataSafe(Data(base64Encoded: "Aw==")!)
+            } else {
+                Global.machine?.writeProtocolEvent(SimpleEvent(type: "killed"))
+                DispatchQueue.main.async {
+                    DiavirtCommand.exit(withError: ExitCode.success)
+                }
+            }
+        }
+
+        if enableSignalPassing {
+            signal(SIGSTOP) { _ in
+                Global.machine?.writeStdinDataSafe(Data(base64Encoded: "Gg==")!)
             }
         }
 
@@ -65,5 +80,6 @@ struct DiavirtCommand: ParsableCommand {
     enum Global {
         static var machine: DAVirtualMachine?
         static var stateObserverHandle: NSKeyValueObservation?
+        static var enableSignalPassing = false
     }
 }
