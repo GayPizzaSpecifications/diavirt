@@ -174,11 +174,7 @@ extension DASerialPort {
 
 extension DAStdioSerialAttachment {
     func build(wire: WireProtocol) throws -> VZFileHandleSerialPortAttachment {
-        var attributes = termios()
-        tcgetattr(FileHandle.standardInput.fileDescriptor, &attributes)
-        attributes.c_iflag &= ~tcflag_t(ICRNL)
-        attributes.c_lflag &= ~tcflag_t(ICANON | ECHO)
-        tcsetattr(FileHandle.standardInput.fileDescriptor, TCSANOW, &attributes)
+        DiavirtCommand.Global.terminalMode.enableRawMode()
 
         let stdinWritePipe = Pipe()
         wire.trackOutputPipe(stdinWritePipe, tag: "stdin")

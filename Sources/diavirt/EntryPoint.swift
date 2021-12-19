@@ -46,6 +46,7 @@ struct DiavirtCommand: ParsableCommand {
         Global.enableSignalPassing = enableSignalPassing
 
         atexit {
+            Global.terminalMode.restoreOriginalAttributes()
             Global.stateObserverHandle?.invalidate()
         }
 
@@ -81,5 +82,6 @@ struct DiavirtCommand: ParsableCommand {
         static var machine: DAVirtualMachine?
         static var stateObserverHandle: NSKeyValueObservation?
         static var enableSignalPassing = false
+        static var terminalMode = TerminalMode()
     }
 }
