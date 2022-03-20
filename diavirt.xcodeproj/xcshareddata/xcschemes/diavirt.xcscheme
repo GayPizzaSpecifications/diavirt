@@ -36,7 +36,7 @@
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
       launchStyle = "0"
       useCustomWorkingDirectory = "YES"
-      customWorkingDirectory = "$(PROJECT_DIR)/work/fedora"
+      customWorkingDirectory = "$(PROJECT_DIR)/work/macr"
       ignoresPersistentStateOnLaunch = "NO"
       debugDocumentVersioning = "YES"
       debugServiceExtension = "internal"
@@ -57,11 +57,11 @@
             isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
-            argument = "fedora.json"
+            argument = "macos.json"
             isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument
-            argument = "--viewer-mode"
+            argument = "-v"
             isEnabled = "YES">
          </CommandLineArgument>
       </CommandLineArguments>

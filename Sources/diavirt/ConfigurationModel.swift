@@ -23,10 +23,12 @@ struct DAVirtualMachineConfiguration: Codable {
     let socketDevices: [DASocketDevice]?
     let keyboardDevices: [DAKeyboardDevice]?
     let pointingDevices: [DAPointingDevice]?
+    let macRestoreImage: DAMacOSRestoreImage?
 }
 
 struct DABootLoader: Codable {
     let linuxBootLoader: DALinuxBootLoader?
+    let macOSBootLoader: DAMacOSBootLoader?
 }
 
 struct DALinuxBootLoader: Codable {
@@ -35,11 +37,19 @@ struct DALinuxBootLoader: Codable {
     let commandLine: String?
 }
 
+struct DAMacOSBootLoader: Codable {}
+
 struct DAPlatform: Codable {
     let genericPlatform: DAGenericPlatform?
+    let macPlatform: DAMacPlatform?
 }
 
 struct DAGenericPlatform: Codable {}
+
+struct DAMacPlatform: Codable {
+    let auxiliaryStoragePath: String
+    let machineIdentifierPath: String
+}
 
 struct DAStorageDevice: Codable {
     let diskImageAttachment: DADiskImageAttachment?
@@ -148,3 +158,14 @@ struct DAPointingDevice: Codable {
 }
 
 struct DAUSBScreenCoordinatePointingDevice: Codable {}
+
+struct DAMacOSRestoreImage: Codable {
+    let latestSupportedRestoreImage: DALatestSupportedMacOSRestoreImage?
+    let fileRestoreImage: DAFileMacOSRestoreImage?
+}
+
+struct DALatestSupportedMacOSRestoreImage: Codable {}
+
+struct DAFileMacOSRestoreImage: Codable {
+    let restoreImagePath: String
+}

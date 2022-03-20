@@ -8,11 +8,27 @@
 import Foundation
 import Virtualization
 
+class DABuildState {
+    #if arch(arm64)
+        var macRestoreImage: VZMacOSRestoreImage?
+    #endif
+}
+
 extension DAVirtualMachineConfiguration {
-    func build(wire: WireProtocol) throws -> VZVirtualMachineConfiguration {
+    func preflight(wire: WireProtocol) async throws -> DABuildState {
+        let state = DABuildState()
+        #if arch(arm64)
+            if let macRestoreImage = macRestoreImage {
+                state.macRestoreImage = try await macRestoreImage.preflight(wire: wire)
+            }
+        #endif
+        return state
+    }
+
+    func build(wire: WireProtocol, state: DABuildState) throws -> VZVirtualMachineConfiguration {
         let configuration = VZVirtualMachineConfiguration()
-        try bootLoader.apply(to: configuration)
-        try platform.apply(to: configuration)
+        try bootLoader.apply(to: configuration, state: state)
+        try platform.apply(to: configuration, state: state)
         configuration.cpuCount = cpuCoreCount
         configuration.memorySize = memorySizeInBytes
 
@@ -82,15 +98,21 @@ extension DAVirtualMachineConfiguration {
 }
 
 extension DABootLoader {
-    func apply(to configuration: VZVirtualMachineConfiguration) throws {
-        if let linux = linuxBootLoader {
-            configuration.bootLoader = linux.build()
+    func apply(to configuration: VZVirtualMachineConfiguration, state _: DABuildState) throws {
+        if let linuxBootLoader = linuxBootLoader {
+            configuration.bootLoader = try linuxBootLoader.build()
         }
+
+        #if arch(arm64)
+            if let macOSBootLoader = macOSBootLoader {
+                configuration.bootLoader = try macOSBootLoader.build()
+            }
+        #endif
     }
 }
 
 extension DALinuxBootLoader {
-    func build() -> VZLinuxBootLoader {
+    func build() throws -> VZLinuxBootLoader {
         let kernelURL = URL(fileURLWithPath: kernelFilePath).absoluteURL
         let bootloader = VZLinuxBootLoader(kernelURL: kernelURL)
 
@@ -106,11 +128,25 @@ extension DALinuxBootLoader {
     }
 }
 
+#if arch(arm64)
+    extension DAMacOSBootLoader {
+        func build() throws -> VZMacOSBootLoader {
+            VZMacOSBootLoader()
+        }
+    }
+#endif
+
 extension DAPlatform {
-    func apply(to configuration: VZVirtualMachineConfiguration) throws {
+    func apply(to configuration: VZVirtualMachineConfiguration, state: DABuildState) throws {
         if let genericPlatform = genericPlatform {
             configuration.platform = try genericPlatform.build()
         }
+
+        #if arch(arm64)
+            if let macPlatform = macPlatform {
+                configuration.platform = try macPlatform.build(state: state)
+            }
+        #endif
     }
 }
 
@@ -119,6 +155,38 @@ extension DAGenericPlatform {
         VZGenericPlatformConfiguration()
     }
 }
+
+#if arch(arm64)
+    extension DAMacPlatform {
+        func build(state: DABuildState) throws -> VZMacPlatformConfiguration {
+            let restoreImage = state.macRestoreImage!
+            let configuration = restoreImage.mostFeaturefulSupportedConfiguration!
+            let model = configuration.hardwareModel
+            let platform = VZMacPlatformConfiguration()
+            let auxilaryStorageURL = URL(fileURLWithPath: auxiliaryStoragePath)
+            let auxilaryStorage: VZMacAuxiliaryStorage
+            if !FileManager.default.fileExists(atPath: auxiliaryStoragePath) {
+                auxilaryStorage = try VZMacAuxiliaryStorage(creatingStorageAt: auxilaryStorageURL, hardwareModel: model, options: .allowOverwrite)
+            } else {
+                auxilaryStorage = VZMacAuxiliaryStorage(contentsOf: auxilaryStorageURL)
+            }
+
+            var machineIdentifier: VZMacMachineIdentifier?
+            if FileManager.default.fileExists(atPath: machineIdentifierPath) {
+                let data = try Data(contentsOf: URL(fileURLWithPath: machineIdentifierPath))
+                machineIdentifier = VZMacMachineIdentifier(dataRepresentation: data)
+            }
+
+            platform.auxiliaryStorage = auxilaryStorage
+            platform.hardwareModel = configuration.hardwareModel
+
+            if let machineIdentifier = machineIdentifier {
+                platform.machineIdentifier = machineIdentifier
+            }
+            return platform
+        }
+    }
+#endif
 
 extension DAStorageDevice {
     func build() throws -> VZStorageDeviceConfiguration {
@@ -174,8 +242,6 @@ extension DASerialPort {
 
 extension DAStdioSerialAttachment {
     func build(wire: WireProtocol) throws -> VZFileHandleSerialPortAttachment {
-        DiavirtCommand.Global.terminalMode.enableRawMode()
-
         let stdinWritePipe = Pipe()
         wire.trackOutputPipe(stdinWritePipe, tag: "stdin")
 
@@ -406,3 +472,34 @@ extension DAUSBScreenCoordinatePointingDevice {
         VZUSBScreenCoordinatePointingDeviceConfiguration()
     }
 }
+
+#if arch(arm64)
+    extension DAMacOSRestoreImage {
+        func preflight(wire: WireProtocol) async throws -> VZMacOSRestoreImage {
+            wire.writeProtocolEvent(StateEvent("preflight.macRestoreImage.start"))
+            var restoreImage: VZMacOSRestoreImage?
+
+            if let latestSupportedRestoreImage = latestSupportedRestoreImage {
+                restoreImage = try await latestSupportedRestoreImage.preflight()
+            }
+
+            if let fileRestoreImage = fileRestoreImage {
+                restoreImage = try await fileRestoreImage.preflight()
+            }
+            wire.writeProtocolEvent(StateEvent("preflight.macRestoreImage.end"))
+            return restoreImage!
+        }
+    }
+
+    extension DALatestSupportedMacOSRestoreImage {
+        func preflight() async throws -> VZMacOSRestoreImage {
+            try await VZMacOSRestoreImage.latestSupported
+        }
+    }
+
+    extension DAFileMacOSRestoreImage {
+        func preflight() async throws -> VZMacOSRestoreImage {
+            try await VZMacOSRestoreImage.image(from: URL(fileURLWithPath: restoreImagePath))
+        }
+    }
+#endif

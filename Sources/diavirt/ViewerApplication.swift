@@ -18,8 +18,14 @@ struct DiavirtApp: App {
 }
 
 struct GlobalMachineView: View {
+    @State
+    var machine: VZVirtualMachine?
+
     var body: some View {
-        VirtualMachineView(DiavirtCommand.Global.machine?.machine)
+        VirtualMachineView(machine)
+            .task {
+                self.machine = DiavirtCommand.Global.machine?.machine
+            }
     }
 }
 

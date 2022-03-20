@@ -11,31 +11,75 @@ import Virtualization
 class DAVirtualMachine: NSObject, WireProtocol, VZVirtualMachineDelegate {
     let configuration: DAVirtualMachineConfiguration
     let enableWireProtocol: Bool
+    let enableInstallerMode: Bool
 
     var machine: VZVirtualMachine?
+    var state: DABuildState?
     var inputs: [String: Pipe] = [:]
     var outputs: [String: Pipe] = [:]
 
-    init(_ configuration: DAVirtualMachineConfiguration, enableWireProtocol: Bool) {
+    init(_ configuration: DAVirtualMachineConfiguration, enableWireProtocol: Bool, enableInstallerMode: Bool) {
         self.configuration = configuration
         self.enableWireProtocol = enableWireProtocol
+        self.enableInstallerMode = enableInstallerMode
     }
 
-    func create() throws {
-        let config = try configuration.build(wire: self)
+    func create() async throws {
+        writeProtocolEvent(StateEvent("create.start"))
+        writeProtocolEvent(StateEvent("preflight.start"))
+        state = try await configuration.preflight(wire: self)
+        writeProtocolEvent(StateEvent("preflight.end"))
+        writeProtocolEvent(StateEvent("configure.start"))
+        let config = try configuration.build(wire: self, state: state!)
         try config.validate()
+        writeProtocolEvent(StateEvent("configure.end"))
         let machine = VZVirtualMachine(configuration: config)
         machine.delegate = self
         self.machine = machine
+        writeProtocolEvent(StateEvent("create.end"))
     }
 
     func start() {
-        machine!.start { result in
-            switch result {
-            case .success:
-                self.writeProtocolEvent(SimpleEvent(type: "started"))
-            case let .failure(error):
-                self.writeProtocolEvent(ErrorEvent(error))
+        if enableInstallerMode {
+            doInstallMode()
+        } else {
+            writeProtocolEvent(StateEvent("runtime.starting"))
+            doActualStart()
+            writeProtocolEvent(StateEvent("runtime.started"))
+        }
+    }
+
+    #if arch(arm64)
+        private func doInstallMode() {
+            DispatchQueue.main.async {
+                let installer = VZMacOSInstaller(virtualMachine: self.machine!, restoringFromImageAt: self.state!.macRestoreImage!.url)
+                installer.install { result in
+                    switch result {
+                    case let .failure(error):
+                        self.writeProtocolEvent(ErrorEvent(error))
+                    case .success:
+                        self.doActualStart()
+                        self.writeProtocolEvent(StateEvent("runtime.started"))
+                    }
+                }
+                DiavirtCommand.Global.installationObserver = installer.progress.observe(\.fractionCompleted, options: [.initial, .new]) { _, change in
+                    NSLog("Installation progress: \(change.newValue! * 100).")
+                }
+            }
+        }
+    #else
+        private func doInstallMode() {}
+    #endif
+
+    private func doActualStart() {
+        DispatchQueue.main.async {
+            self.machine?.start { result in
+                switch result {
+                case .success:
+                    self.writeProtocolEvent(SimpleEvent(type: "started"))
+                case let .failure(error):
+                    self.writeProtocolEvent(ErrorEvent(error))
+                }
             }
         }
     }

@@ -28,21 +28,18 @@ struct DiavirtCommand: ParsableCommand {
     @Flag(name: .long, help: "Enable Passing of Signals to VM")
     var enableSignalPassing: Bool = false
 
+    @Flag(name: .long, inversion: .prefixedEnableDisable, help: "Enable Terminal Raw Mode")
+    var rawMode: Bool = true
+
+    @Flag(name: .long, inversion: .prefixedEnableDisable, help: "Enable Installer Mode")
+    var installerMode: Bool = false
+
     func run() throws {
         let configFileURL = URL(fileURLWithPath: configFilePath)
         let data = try Data(contentsOf: configFileURL)
         let decoder = JSONDecoder()
         let configuration = try decoder.decode(DAVirtualMachineConfiguration.self, from: data)
-        Global.machine = DAVirtualMachine(configuration, enableWireProtocol: wireProtocol)
-        try Global.machine!.create()
-        Global.stateObserverHandle = Global.machine!.watchForState { state in
-            if state == .error {
-                DiavirtCommand.exit(withError: ExitCode.failure)
-            } else if state == .stopped {
-                DiavirtCommand.exit(withError: ExitCode.success)
-            }
-        }
-
+        Global.machine = DAVirtualMachine(configuration, enableWireProtocol: wireProtocol, enableInstallerMode: installerMode)
         Global.enableSignalPassing = enableSignalPassing
 
         atexit {
@@ -67,20 +64,34 @@ struct DiavirtCommand: ParsableCommand {
             }
         }
 
-        DispatchQueue.main.async {
+        if rawMode {
+            Global.terminalMode.enableRawMode()
+        }
+
+        Task {
+            try await Global.machine!.create()
             Global.machine?.start()
+            Global.stateObserverHandle = Global.machine!.watchForState { state in
+                if state == .error {
+                    DiavirtCommand.exit(withError: ExitCode.failure)
+                } else if state == .stopped {
+                    DiavirtCommand.exit(withError: ExitCode.success)
+                }
+            }
         }
 
         if viewerMode {
             NSApplication.shared.setActivationPolicy(.regular)
             DiavirtApp.main()
         }
+
         dispatchMain()
     }
 
     enum Global {
         static var machine: DAVirtualMachine?
         static var stateObserverHandle: NSKeyValueObservation?
+        static var installationObserver: NSKeyValueObservation?
         static var enableSignalPassing = false
         static var terminalMode = TerminalMode()
     }
