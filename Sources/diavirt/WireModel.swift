@@ -53,3 +53,12 @@ struct PipeDataEvent: WireEvent {
         self.data = data
     }
 }
+
+struct InstallationProgressEvent: WireEvent {
+    var type: String = "installation.progress"
+    let progress: Double
+    
+    init(progress: Double) {
+        self.progress = progress
+    }
+}

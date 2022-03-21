@@ -72,10 +72,12 @@ struct DiavirtCommand: ParsableCommand {
             try await Global.machine!.create()
             Global.machine?.start()
             Global.stateObserverHandle = Global.machine!.watchForState { state in
-                if state == .error {
-                    DiavirtCommand.exit(withError: ExitCode.failure)
-                } else if state == .stopped {
-                    DiavirtCommand.exit(withError: ExitCode.success)
+                Task {
+                    if state == .error {
+                        DiavirtCommand.exit(withError: ExitCode.failure)
+                    } else if state == .stopped {
+                        DiavirtCommand.exit(withError: ExitCode.success)
+                    }
                 }
             }
         }

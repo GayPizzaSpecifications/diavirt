@@ -31,7 +31,6 @@ class DAVirtualMachine: NSObject, WireProtocol, VZVirtualMachineDelegate {
         writeProtocolEvent(StateEvent("preflight.end"))
         writeProtocolEvent(StateEvent("configure.start"))
         let config = try configuration.build(wire: self, state: state!)
-        try config.validate()
         writeProtocolEvent(StateEvent("configure.end"))
         let machine = VZVirtualMachine(configuration: config)
         machine.delegate = self
@@ -40,10 +39,10 @@ class DAVirtualMachine: NSObject, WireProtocol, VZVirtualMachineDelegate {
     }
 
     func start() {
+        writeProtocolEvent(StateEvent("runtime.starting"))
         if enableInstallerMode {
             doInstallMode()
         } else {
-            writeProtocolEvent(StateEvent("runtime.starting"))
             doActualStart()
             writeProtocolEvent(StateEvent("runtime.started"))
         }
@@ -62,8 +61,9 @@ class DAVirtualMachine: NSObject, WireProtocol, VZVirtualMachineDelegate {
                         self.writeProtocolEvent(StateEvent("runtime.started"))
                     }
                 }
+                
                 DiavirtCommand.Global.installationObserver = installer.progress.observe(\.fractionCompleted, options: [.initial, .new]) { _, change in
-                    NSLog("Installation progress: \(change.newValue! * 100).")
+                    self.writeProtocolEvent(InstallationProgressEvent(progress: change.newValue! * 100.0))
                 }
             }
         }

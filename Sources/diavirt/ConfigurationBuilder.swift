@@ -91,8 +91,6 @@ extension DAVirtualMachineConfiguration {
                 configuration.pointingDevices.append(try pointingDevice.build())
             }
         }
-
-        try configuration.validate()
         return configuration
     }
 }
@@ -175,6 +173,10 @@ extension DAGenericPlatform {
             if FileManager.default.fileExists(atPath: machineIdentifierPath) {
                 let data = try Data(contentsOf: URL(fileURLWithPath: machineIdentifierPath))
                 machineIdentifier = VZMacMachineIdentifier(dataRepresentation: data)
+            } else {
+                machineIdentifier = VZMacMachineIdentifier()
+                let dataToSave = machineIdentifier!.dataRepresentation
+                try dataToSave.write(to: URL(fileURLWithPath: machineIdentifierPath))
             }
 
             platform.auxiliaryStorage = auxilaryStorage
