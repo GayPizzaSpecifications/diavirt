@@ -1,6 +1,6 @@
 # diavirt
 
-[![GitHub Workflow](https://github.com/kendfinger/diavirt/actions/workflows/macos.yml/badge.svg)](https://github.com/kendfinger/asset-cache-tool/actions/workflows/macos.yml)
+[![GitHub Workflow](https://github.com/kendfinger/diavirt/actions/workflows/macos.yml/badge.svg)](https://github.com/kendfinger/diavirt/actions/workflows/macos.yml)
 [![Latest Build](https://shields.io/badge/download-nightly-blue)](https://nightly.link/kendfinger/diavirt/workflows/macos/main/diavirt)
 [![Latest Release](https://shields.io/github/v/release/kendfinger/diavirt?display_name=tag&sort=semver)](https://github.com/kendfinger/diavirt/releases/latest)
 

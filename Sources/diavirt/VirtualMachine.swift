@@ -61,7 +61,7 @@ class DAVirtualMachine: NSObject, WireProtocol, VZVirtualMachineDelegate {
                         self.writeProtocolEvent(StateEvent("runtime.started"))
                     }
                 }
-                
+
                 DiavirtCommand.Global.installationObserver = installer.progress.observe(\.fractionCompleted, options: [.initial, .new]) { _, change in
                     self.writeProtocolEvent(InstallationProgressEvent(progress: change.newValue! * 100.0))
                 }
