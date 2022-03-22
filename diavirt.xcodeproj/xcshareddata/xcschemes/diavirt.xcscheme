@@ -53,11 +53,7 @@
       </BuildableProductRunnable>
       <CommandLineArguments>
          <CommandLineArgument
-            argument = "-c"
-            isEnabled = "YES">
-         </CommandLineArgument>
-         <CommandLineArgument
-            argument = "macos.json"
+            argument = "--enable-installer-mode"
             isEnabled = "YES">
          </CommandLineArgument>
          <CommandLineArgument

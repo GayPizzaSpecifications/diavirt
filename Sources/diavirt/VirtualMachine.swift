@@ -11,18 +11,29 @@ import Virtualization
 class DAVirtualMachine: NSObject, WireProtocol, VZVirtualMachineDelegate {
     let configuration: DAVirtualMachineConfiguration
     let enableWireProtocol: Bool
-    let enableInstallerMode: Bool
+
+    #if arch(arm64)
+        let enableInstallerMode: Bool
+    #endif
 
     var machine: VZVirtualMachine?
     var state: DABuildState?
     var inputs: [String: Pipe] = [:]
     var outputs: [String: Pipe] = [:]
+    var inhibitStopForRestart = false
 
-    init(_ configuration: DAVirtualMachineConfiguration, enableWireProtocol: Bool, enableInstallerMode: Bool) {
-        self.configuration = configuration
-        self.enableWireProtocol = enableWireProtocol
-        self.enableInstallerMode = enableInstallerMode
-    }
+    #if arch(arm64)
+        init(_ configuration: DAVirtualMachineConfiguration, enableWireProtocol: Bool, enableInstallerMode: Bool) {
+            self.configuration = configuration
+            self.enableWireProtocol = enableWireProtocol
+            self.enableInstallerMode = enableInstallerMode
+        }
+    #else
+        init(_ configuration: DAVirtualMachineConfiguration, enableWireProtocol: Bool) {
+            self.configuration = configuration
+            self.enableWireProtocol = enableWireProtocol
+        }
+    #endif
 
     func create() async throws {
         writeProtocolEvent(StateEvent("create.start"))
@@ -40,47 +51,56 @@ class DAVirtualMachine: NSObject, WireProtocol, VZVirtualMachineDelegate {
 
     func start() {
         writeProtocolEvent(StateEvent("runtime.starting"))
-        if enableInstallerMode {
-            doInstallMode()
-        } else {
-            doActualStart()
-            writeProtocolEvent(StateEvent("runtime.started"))
-        }
+
+        #if arch(arm64)
+            if enableInstallerMode {
+                doInstallMode()
+                return
+            }
+        #endif
+        doActualStart()
     }
 
     #if arch(arm64)
         private func doInstallMode() {
             DispatchQueue.main.async {
                 let installer = VZMacOSInstaller(virtualMachine: self.machine!, restoringFromImageAt: self.state!.macRestoreImage!.url)
-                installer.install { result in
-                    switch result {
-                    case let .failure(error):
-                        self.writeProtocolEvent(ErrorEvent(error))
-                    case .success:
-                        self.doActualStart()
-                        self.writeProtocolEvent(StateEvent("runtime.started"))
-                    }
-                }
-
-                DiavirtCommand.Global.installationObserver = installer.progress.observe(\.fractionCompleted, options: [.initial, .new]) { _, change in
-                    self.writeProtocolEvent(InstallationProgressEvent(progress: change.newValue! * 100.0))
-                }
+                self.writeProtocolEvent(StateEvent("runtime.installer.start"))
+                installer.install(completionHandler: self.onInstallComplete)
+                self.observeInstallProgress(installer: installer)
             }
         }
-    #else
-        private func doInstallMode() {}
+
+        private func observeInstallProgress(installer: VZMacOSInstaller) {
+            DiavirtCommand.Global.installationObserver = installer.progress.observe(\.fractionCompleted, options: [.initial, .new]) { _, change in
+                self.writeProtocolEvent(InstallationProgressEvent(progress: change.newValue! * 100.0))
+            }
+        }
+
+        private func onInstallComplete(result: Result<Void, Error>) {
+            writeProtocolEvent(StateEvent("runtime.installer.end"))
+            switch result {
+            case let .failure(error):
+                writeProtocolEvent(ErrorEvent(error))
+            case .success:
+                inhibitStopForRestart = true
+                writeProtocolEvent(StateEvent("runtime.started"))
+            }
+        }
     #endif
 
     private func doActualStart() {
         DispatchQueue.main.async {
-            self.machine?.start { result in
-                switch result {
-                case .success:
-                    self.writeProtocolEvent(SimpleEvent(type: "started"))
-                case let .failure(error):
-                    self.writeProtocolEvent(ErrorEvent(error))
-                }
-            }
+            self.machine?.start(completionHandler: self.onMachineStart)
+        }
+    }
+
+    private func onMachineStart(result: Result<Void, Error>) {
+        switch result {
+        case .success:
+            writeProtocolEvent(SimpleEvent(type: "started"))
+        case let .failure(error):
+            writeProtocolEvent(ErrorEvent(error))
         }
     }
 
@@ -88,6 +108,11 @@ class DAVirtualMachine: NSObject, WireProtocol, VZVirtualMachineDelegate {
         machine!.observe(\.state) { machine, _ in
             let state = machine.state
             self.writeProtocolEvent(StateEvent(self.stateToString(state)))
+            if state == .stopped, self.inhibitStopForRestart {
+                self.inhibitStopForRestart = false
+                self.doActualStart()
+                return
+            }
             stateHandler(state)
         }
     }
@@ -134,8 +159,6 @@ class DAVirtualMachine: NSObject, WireProtocol, VZVirtualMachineDelegate {
         }
     }
 
-    private let encoder = JSONEncoder()
-
     func stateToString(_ state: VZVirtualMachine.State) -> String {
         switch state {
         case .stopped:
@@ -158,4 +181,6 @@ class DAVirtualMachine: NSObject, WireProtocol, VZVirtualMachineDelegate {
             return "unknown"
         }
     }
+
+    private let encoder = JSONEncoder()
 }

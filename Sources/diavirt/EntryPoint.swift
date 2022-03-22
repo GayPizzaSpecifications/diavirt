@@ -31,15 +31,23 @@ struct DiavirtCommand: ParsableCommand {
     @Flag(name: .long, inversion: .prefixedEnableDisable, help: "Enable Terminal Raw Mode")
     var rawMode: Bool = true
 
-    @Flag(name: .long, inversion: .prefixedEnableDisable, help: "Enable Installer Mode")
-    var installerMode: Bool = false
+    #if arch(arm64)
+        @Flag(name: .shortAndLong, inversion: .prefixedEnableDisable, help: "Enable Installer Mode")
+        var installerMode: Bool = false
+    #endif
 
     func run() throws {
         let configFileURL = URL(fileURLWithPath: configFilePath)
         let data = try Data(contentsOf: configFileURL)
         let decoder = JSONDecoder()
         let configuration = try decoder.decode(DAVirtualMachineConfiguration.self, from: data)
-        Global.machine = DAVirtualMachine(configuration, enableWireProtocol: wireProtocol, enableInstallerMode: installerMode)
+
+        #if arch(arm64)
+            Global.machine = DAVirtualMachine(configuration, enableWireProtocol: wireProtocol, enableInstallerMode: installerMode)
+        #else
+            Global.machine = DAVirtualMachine(configuration, enableWireProtocol: wireProtocol)
+        #endif
+
         Global.enableSignalPassing = enableSignalPassing
 
         atexit {

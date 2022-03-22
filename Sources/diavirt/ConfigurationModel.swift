@@ -59,6 +59,7 @@ struct DAStorageDevice: Codable {
 struct DADiskImageAttachment: Codable {
     let imageFilePath: String
     let isReadOnly: Bool?
+    let autoCreateSizeInBytes: UInt64?
 }
 
 struct DAVirtioBlockDevice: Codable {}

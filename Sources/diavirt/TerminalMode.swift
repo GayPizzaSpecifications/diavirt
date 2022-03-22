@@ -8,32 +8,37 @@
 import Foundation
 
 struct TerminalMode {
-    private var originalAttributes: termios?
-    private var attributes = termios()
+    private var attributeStack = [termios]()
 
-    private mutating func loadCurrentAttributes() {
+    private mutating func captureCurrentAttributes() -> termios {
+        var attributes = termios()
         tcgetattr(FileHandle.standardInput.fileDescriptor, &attributes)
-        if originalAttributes == nil {
-            originalAttributes = termios()
-            tcgetattr(FileHandle.standardInput.fileDescriptor, &attributes)
-        }
+        attributeStack.append(attributes)
+        var attributesToReturn = termios()
+        memcpy(&attributesToReturn, &attributes, MemoryLayout.size(ofValue: attributes))
+        return attributesToReturn
     }
 
-    private mutating func saveCurrentAttributes() {
+    private mutating func captureAndModifyAttributes(change: (inout termios) -> Void) {
+        var attributesToChange = captureCurrentAttributes()
+        change(&attributesToChange)
+        writeNewAttributes(attributes: &attributesToChange)
+    }
+
+    private mutating func writeNewAttributes(attributes: inout termios) {
         tcsetattr(FileHandle.standardInput.fileDescriptor, TCSANOW, &attributes)
     }
 
     mutating func restoreOriginalAttributes() {
-        if let originalAttributes = originalAttributes {
-            attributes = originalAttributes
-            saveCurrentAttributes()
+        if var last = attributeStack.popLast() {
+            writeNewAttributes(attributes: &last)
         }
     }
 
     mutating func enableRawMode() {
-        loadCurrentAttributes()
-        attributes.c_iflag &= ~tcflag_t(ICRNL)
-        attributes.c_lflag &= ~tcflag_t(ICANON | ECHO)
-        saveCurrentAttributes()
+        captureAndModifyAttributes { attributes in
+            attributes.c_iflag &= ~tcflag_t(ICRNL)
+            attributes.c_lflag &= ~tcflag_t(ICANON | ECHO)
+        }
     }
 }

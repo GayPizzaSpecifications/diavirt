@@ -209,8 +209,34 @@ extension DAStorageDevice {
 extension DADiskImageAttachment {
     func build() throws -> VZDiskImageStorageDeviceAttachment {
         let url = URL(fileURLWithPath: imageFilePath).absoluteURL
+
+        if let autoCreateSizeInBytes = autoCreateSizeInBytes {
+            if !FileManager.default.fileExists(atPath: url.path) {
+                let parentFileUrl = url.deletingLastPathComponent()
+                try FileManager.default.createDirectory(at: parentFileUrl, withIntermediateDirectories: true)
+                createDiskImage(url.path, size: autoCreateSizeInBytes)
+            }
+        }
+
         let readOnly = isReadOnly ?? false
         return try VZDiskImageStorageDeviceAttachment(url: url, readOnly: readOnly)
+    }
+
+    private func createDiskImage(_ path: String, size: UInt64) {
+        let diskFd = open(path, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR)
+        if diskFd == -1 {
+            fatalError("Cannot create disk image.")
+        }
+
+        var result = ftruncate(diskFd, Int64(size))
+        if result != 0 {
+            fatalError("ftruncate() failed.")
+        }
+
+        result = close(diskFd)
+        if result != 0 {
+            fatalError("Failed to close the disk image.")
+        }
     }
 }
 
