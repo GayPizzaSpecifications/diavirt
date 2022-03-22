@@ -32,23 +32,57 @@ struct DiavirtCommand: ParsableCommand {
     var rawMode: Bool = true
 
     #if arch(arm64)
-        @Flag(name: .shortAndLong, inversion: .prefixedEnableDisable, help: "Enable Installer Mode")
+        @Flag(name: .long, inversion: .prefixedEnableDisable, help: "Enable Installer Mode")
         var installerMode: Bool = false
+
+        @Flag(name: [
+            .customShort("i"),
+            .long
+        ], inversion: .prefixedEnableDisable, help: "Enable Automatic Installer Mode")
+        var autoInstallerMode: Bool = true
+
+        @Flag(name: [
+            .customShort("m"),
+            .long
+        ])
+        var cannedMac: Bool = false
     #endif
 
     func run() throws {
         let configFileURL = URL(fileURLWithPath: configFilePath)
+
+        var shouldEnableSignalPassing = enableSignalPassing
+        var shouldRawMode = rawMode
+        var shouldViewerMode = viewerMode
+
+        #if arch(arm64)
+            if cannedMac {
+                shouldEnableSignalPassing = false
+                shouldRawMode = false
+                shouldViewerMode = true
+
+                if !FileManager.default.fileExists(atPath: configFileURL.path) {
+                    try FileManager.default.createDirectory(at: configFileURL.deletingLastPathComponent(), withIntermediateDirectories: true)
+                    let canned = createCannedMac()
+                    let encoder = JSONEncoder()
+                    encoder.outputFormatting = .prettyPrinted
+                    let encoded = try encoder.encode(canned)
+                    try encoded.write(to: configFileURL)
+                }
+            }
+        #endif
+
         let data = try Data(contentsOf: configFileURL)
         let decoder = JSONDecoder()
         let configuration = try decoder.decode(DAVirtualMachineConfiguration.self, from: data)
 
         #if arch(arm64)
-            Global.machine = DAVirtualMachine(configuration, enableWireProtocol: wireProtocol, enableInstallerMode: installerMode)
+            Global.machine = DAVirtualMachine(configuration, enableWireProtocol: wireProtocol, enableInstallerMode: installerMode, autoInstallerMode: autoInstallerMode)
         #else
             Global.machine = DAVirtualMachine(configuration, enableWireProtocol: wireProtocol)
         #endif
 
-        Global.enableSignalPassing = enableSignalPassing
+        Global.enableSignalPassing = shouldEnableSignalPassing
 
         atexit {
             Global.terminalMode.restoreOriginalAttributes()
@@ -66,13 +100,13 @@ struct DiavirtCommand: ParsableCommand {
             }
         }
 
-        if enableSignalPassing {
+        if shouldEnableSignalPassing {
             signal(SIGSTOP) { _ in
                 Global.machine?.writeStdinDataSafe(Data(base64Encoded: "Gg==")!)
             }
         }
 
-        if rawMode {
+        if shouldRawMode {
             Global.terminalMode.enableRawMode()
         }
 
@@ -90,7 +124,7 @@ struct DiavirtCommand: ParsableCommand {
             }
         }
 
-        if viewerMode {
+        if shouldViewerMode {
             NSApplication.shared.setActivationPolicy(.regular)
             DiavirtApp.main()
         }

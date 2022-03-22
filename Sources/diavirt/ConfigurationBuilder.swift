@@ -34,7 +34,7 @@ extension DAVirtualMachineConfiguration {
 
         if let storageDevices = storageDevices {
             for storageDevice in storageDevices {
-                configuration.storageDevices.append(try storageDevice.build())
+                configuration.storageDevices.append(try storageDevice.build(wire: wire))
             }
         }
 
@@ -191,12 +191,12 @@ extension DAGenericPlatform {
 #endif
 
 extension DAStorageDevice {
-    func build() throws -> VZStorageDeviceConfiguration {
+    func build(wire: WireProtocol) throws -> VZStorageDeviceConfiguration {
         var attachment: VZStorageDeviceAttachment?
         var storage: VZStorageDeviceConfiguration?
 
         if let diskImageAttachment = diskImageAttachment {
-            attachment = try diskImageAttachment.build()
+            attachment = try diskImageAttachment.build(wire: wire)
         }
 
         if let virtioBlockDevice = virtioBlockDevice {
@@ -207,16 +207,21 @@ extension DAStorageDevice {
 }
 
 extension DADiskImageAttachment {
-    func build() throws -> VZDiskImageStorageDeviceAttachment {
+    func build(wire: WireProtocol) throws -> VZDiskImageStorageDeviceAttachment {
         let url = URL(fileURLWithPath: imageFilePath).absoluteURL
 
+        var wasDiskAllocated = false
         if let autoCreateSizeInBytes = autoCreateSizeInBytes {
             if !FileManager.default.fileExists(atPath: url.path) {
                 let parentFileUrl = url.deletingLastPathComponent()
                 try FileManager.default.createDirectory(at: parentFileUrl, withIntermediateDirectories: true)
                 createDiskImage(url.path, size: autoCreateSizeInBytes)
+                wasDiskAllocated = true
+                wire.writeProtocolEvent(NotifyEvent("disk.allocated"))
             }
         }
+
+        wire.trackDiskAllocated(allocated: wasDiskAllocated)
 
         let readOnly = isReadOnly ?? false
         return try VZDiskImageStorageDeviceAttachment(url: url, readOnly: readOnly)
@@ -508,7 +513,7 @@ extension DAUSBScreenCoordinatePointingDevice {
             var restoreImage: VZMacOSRestoreImage?
 
             if let latestSupportedRestoreImage = latestSupportedRestoreImage {
-                restoreImage = try await latestSupportedRestoreImage.preflight()
+                restoreImage = try await latestSupportedRestoreImage.preflight(wire: wire)
             }
 
             if let fileRestoreImage = fileRestoreImage {
@@ -520,8 +525,30 @@ extension DAUSBScreenCoordinatePointingDevice {
     }
 
     extension DALatestSupportedMacOSRestoreImage {
-        func preflight() async throws -> VZMacOSRestoreImage {
-            try await VZMacOSRestoreImage.latestSupported
+        func preflight(wire: WireProtocol) async throws -> VZMacOSRestoreImage {
+            let imageRemote = try await VZMacOSRestoreImage.latestSupported
+            let semaphore = DispatchSemaphore(value: 0)
+
+            var localFileURL: URL?
+            let task = URLSession.shared.downloadTask(with: imageRemote.url) { url, _, error in
+                if let error = error {
+                    wire.writeProtocolEvent(ErrorEvent(error))
+                    return
+                }
+
+                if let url = url {
+                    localFileURL = url
+                }
+                semaphore.signal()
+            }
+
+            let observer = task.progress.observe(\.fractionCompleted, options: [.initial, .new]) { _, change in
+                wire.writeProtocolEvent(InstallationDownloadProgressEvent(progress: change.newValue! * 100.0))
+            }
+            task.resume()
+            semaphore.wait()
+            observer.invalidate()
+            return try await VZMacOSRestoreImage.image(from: localFileURL!)
         }
     }
 

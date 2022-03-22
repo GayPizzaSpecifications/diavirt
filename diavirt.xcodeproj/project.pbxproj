@@ -15,6 +15,7 @@
 		2A4EEF0A2768FC7300E7FA9F /* WireModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A4EEF092768FC7300E7FA9F /* WireModel.swift */; };
 		2A4EEF0C27690E9A00E7FA9F /* ViewerApplication.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A4EEF0B27690E9A00E7FA9F /* ViewerApplication.swift */; };
 		2A7518EC276EAC560032FC8B /* TerminalMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A7518EB276EAC560032FC8B /* TerminalMode.swift */; };
+		2AAE43B227E9B4F0005A8EE0 /* CannedMac.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AAE43B127E9B4F0005A8EE0 /* CannedMac.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -41,6 +42,7 @@
 		2A4EEF092768FC7300E7FA9F /* WireModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WireModel.swift; sourceTree = "<group>"; };
 		2A4EEF0B27690E9A00E7FA9F /* ViewerApplication.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewerApplication.swift; sourceTree = "<group>"; };
 		2A7518EB276EAC560032FC8B /* TerminalMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TerminalMode.swift; sourceTree = "<group>"; };
+		2AAE43B127E9B4F0005A8EE0 /* CannedMac.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CannedMac.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -84,6 +86,7 @@
 				2A4EEF0B27690E9A00E7FA9F /* ViewerApplication.swift */,
 				2A2A9C7E27678ECF0006C500 /* VirtualMachine.swift */,
 				2A4EEF092768FC7300E7FA9F /* WireModel.swift */,
+				2AAE43B127E9B4F0005A8EE0 /* CannedMac.swift */,
 			);
 			path = diavirt;
 			sourceTree = "<group>";
@@ -164,6 +167,7 @@
 				2A2A9C7F27678ECF0006C500 /* VirtualMachine.swift in Sources */,
 				2A3190CA276972CE00D4B154 /* ConfigurationBuilder.swift in Sources */,
 				2A4EEF0C27690E9A00E7FA9F /* ViewerApplication.swift in Sources */,
+				2AAE43B227E9B4F0005A8EE0 /* CannedMac.swift in Sources */,
 				2A7518EC276EAC560032FC8B /* TerminalMode.swift in Sources */,
 				2A4EEF0A2768FC7300E7FA9F /* WireModel.swift in Sources */,
 				2A2A9C7D27678E3B0006C500 /* ConfigurationModel.swift in Sources */,

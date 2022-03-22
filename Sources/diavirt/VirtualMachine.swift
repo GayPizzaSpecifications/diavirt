@@ -14,19 +14,23 @@ class DAVirtualMachine: NSObject, WireProtocol, VZVirtualMachineDelegate {
 
     #if arch(arm64)
         let enableInstallerMode: Bool
+        let autoInstallerMode: Bool
     #endif
 
     var machine: VZVirtualMachine?
     var state: DABuildState?
     var inputs: [String: Pipe] = [:]
     var outputs: [String: Pipe] = [:]
+    var diskAllocatedStates: [Bool] = []
+
     var inhibitStopForRestart = false
 
     #if arch(arm64)
-        init(_ configuration: DAVirtualMachineConfiguration, enableWireProtocol: Bool, enableInstallerMode: Bool) {
+        init(_ configuration: DAVirtualMachineConfiguration, enableWireProtocol: Bool, enableInstallerMode: Bool, autoInstallerMode: Bool) {
             self.configuration = configuration
             self.enableWireProtocol = enableWireProtocol
             self.enableInstallerMode = enableInstallerMode
+            self.autoInstallerMode = autoInstallerMode
         }
     #else
         init(_ configuration: DAVirtualMachineConfiguration, enableWireProtocol: Bool) {
@@ -53,7 +57,16 @@ class DAVirtualMachine: NSObject, WireProtocol, VZVirtualMachineDelegate {
         writeProtocolEvent(StateEvent("runtime.starting"))
 
         #if arch(arm64)
-            if enableInstallerMode {
+            var shouldInstallerMode = enableInstallerMode
+            if autoInstallerMode {
+                if !diskAllocatedStates.isEmpty,
+                   diskAllocatedStates.filter({ $0 }).count == diskAllocatedStates.count {
+                    shouldInstallerMode = true
+                    writeProtocolEvent(NotifyEvent("runtime.installer.auto"))
+                }
+            }
+
+            if shouldInstallerMode {
                 doInstallMode()
                 return
             }
@@ -125,6 +138,10 @@ class DAVirtualMachine: NSObject, WireProtocol, VZVirtualMachineDelegate {
         outputs[tag] = pipe
     }
 
+    func trackDiskAllocated(allocated: Bool) {
+        diskAllocatedStates.append(allocated)
+    }
+
     func guestDidStop(_: VZVirtualMachine) {
         writeProtocolEvent(SimpleEvent(type: "guest-stopped"))
     }
@@ -139,6 +156,14 @@ class DAVirtualMachine: NSObject, WireProtocol, VZVirtualMachineDelegate {
 
     func writeProtocolEvent<T>(_ event: T) where T: WireEvent {
         if !enableWireProtocol {
+            if let message = event.toUserMessage() {
+                var data = message.data(using: .utf8)!
+                data.append(0x0A)
+                DispatchQueue.main.async {
+                    try! FileHandle.standardError.write(contentsOf: data)
+                }
+            }
+
             return
         }
 
