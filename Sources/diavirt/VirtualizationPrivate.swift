@@ -29,7 +29,7 @@ import Virtualization
 }
 
 @objc protocol _VZEFIVariableStore {
-    init(url: URL) throws
+    init(URL: URL) throws
 }
 
 @objc protocol _VZGDBDebugStubConfiguration {
@@ -142,8 +142,7 @@ enum VZPrivateUtilities {
     static func createEfiBootLoader(efiURL: URL, variableStoreURL: URL) throws -> VZBootLoader {
         let efiBootLoader = unsafeBitCast(NSClassFromString("_VZEFIBootLoader")!, to: _VZEFIBootLoader.Type.self).init()
         efiBootLoader.efiURL = efiURL
-
-        let variableStore = try unsafeBitCast(NSClassFromString("_VZEFIVariableStore")!, to: _VZEFIVariableStore.Type.self).init(url: variableStoreURL)
+        let variableStore = try unsafeBitCast(NSClassFromString("_VZEFIVariableStore")!, to: _VZEFIVariableStore.Type.self).init(URL: variableStoreURL)
         efiBootLoader.variableStore = variableStore
         return unsafeBitCast(efiBootLoader, to: VZBootLoader.self)
     }

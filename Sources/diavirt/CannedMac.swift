@@ -13,7 +13,8 @@ func createCannedMac() -> DAVirtualMachineConfiguration {
         memorySizeInBytes: 6 * 1024 * 1024 * 1024,
         bootLoader: .init(
             linuxBootLoader: nil,
-            macOSBootLoader: .init()
+            macOSBootLoader: .init(),
+            efiBootLoader: nil
         ),
         platform: .init(
             genericPlatform: nil,
