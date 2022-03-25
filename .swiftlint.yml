@@ -6,4 +6,9 @@ disabled_rules:
 - nesting
 - large_tuple
 - cyclomatic_complexity
+- identifier_name
+- line_length
+- file_length
+- function_body_length
+- opening_brace
 line_length: 190

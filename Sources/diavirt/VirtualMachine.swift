@@ -60,7 +60,8 @@ class DAVirtualMachine: NSObject, WireProtocol, VZVirtualMachineDelegate {
         var shouldInstallerMode = enableInstallerMode
         if autoInstallerMode {
             if !diskAllocatedStates.isEmpty,
-               diskAllocatedStates.filter({ $0 }).count == diskAllocatedStates.count {
+               diskAllocatedStates.filter({ $0 }).count == diskAllocatedStates.count
+            {
                 shouldInstallerMode = true
                 writeProtocolEvent(NotifyEvent("runtime.installer.auto"))
             }
