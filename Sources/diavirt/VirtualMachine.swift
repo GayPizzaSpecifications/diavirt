@@ -13,8 +13,8 @@ class DAVirtualMachine: NSObject, WireProtocol, VZVirtualMachineDelegate {
     let enableWireProtocol: Bool
 
     #if arch(arm64)
-        let enableInstallerMode: Bool
-        let autoInstallerMode: Bool
+    let enableInstallerMode: Bool
+    let autoInstallerMode: Bool
     #endif
 
     var machine: VZVirtualMachine?
@@ -26,17 +26,17 @@ class DAVirtualMachine: NSObject, WireProtocol, VZVirtualMachineDelegate {
     var inhibitStopForRestart = false
 
     #if arch(arm64)
-        init(_ configuration: DAVirtualMachineConfiguration, enableWireProtocol: Bool, enableInstallerMode: Bool, autoInstallerMode: Bool) {
-            self.configuration = configuration
-            self.enableWireProtocol = enableWireProtocol
-            self.enableInstallerMode = enableInstallerMode
-            self.autoInstallerMode = autoInstallerMode
-        }
+    init(_ configuration: DAVirtualMachineConfiguration, enableWireProtocol: Bool, enableInstallerMode: Bool, autoInstallerMode: Bool) {
+        self.configuration = configuration
+        self.enableWireProtocol = enableWireProtocol
+        self.enableInstallerMode = enableInstallerMode
+        self.autoInstallerMode = autoInstallerMode
+    }
     #else
-        init(_ configuration: DAVirtualMachineConfiguration, enableWireProtocol: Bool) {
-            self.configuration = configuration
-            self.enableWireProtocol = enableWireProtocol
-        }
+    init(_ configuration: DAVirtualMachineConfiguration, enableWireProtocol: Bool) {
+        self.configuration = configuration
+        self.enableWireProtocol = enableWireProtocol
+    }
     #endif
 
     func create() async throws {
@@ -57,49 +57,49 @@ class DAVirtualMachine: NSObject, WireProtocol, VZVirtualMachineDelegate {
         writeProtocolEvent(StateEvent("runtime.starting"))
 
         #if arch(arm64)
-            var shouldInstallerMode = enableInstallerMode
-            if autoInstallerMode {
-                if !diskAllocatedStates.isEmpty,
-                   diskAllocatedStates.filter({ $0 }).count == diskAllocatedStates.count {
-                    shouldInstallerMode = true
-                    writeProtocolEvent(NotifyEvent("runtime.installer.auto"))
-                }
+        var shouldInstallerMode = enableInstallerMode
+        if autoInstallerMode {
+            if !diskAllocatedStates.isEmpty,
+               diskAllocatedStates.filter({ $0 }).count == diskAllocatedStates.count {
+                shouldInstallerMode = true
+                writeProtocolEvent(NotifyEvent("runtime.installer.auto"))
             }
+        }
 
-            if shouldInstallerMode {
-                doInstallMode()
-                return
-            }
+        if shouldInstallerMode {
+            doInstallMode()
+            return
+        }
         #endif
         doActualStart()
     }
 
     #if arch(arm64)
-        private func doInstallMode() {
-            DispatchQueue.main.async {
-                let installer = VZMacOSInstaller(virtualMachine: self.machine!, restoringFromImageAt: self.state!.macRestoreImage!.url)
-                self.writeProtocolEvent(StateEvent("runtime.installer.start"))
-                installer.install(completionHandler: self.onInstallComplete)
-                self.observeInstallProgress(installer: installer)
-            }
+    private func doInstallMode() {
+        DispatchQueue.main.async {
+            let installer = VZMacOSInstaller(virtualMachine: self.machine!, restoringFromImageAt: self.state!.macRestoreImage!.url)
+            self.writeProtocolEvent(StateEvent("runtime.installer.start"))
+            installer.install(completionHandler: self.onInstallComplete)
+            self.observeInstallProgress(installer: installer)
         }
+    }
 
-        private func observeInstallProgress(installer: VZMacOSInstaller) {
-            DiavirtCommand.Global.installationObserver = installer.progress.observe(\.fractionCompleted, options: [.initial, .new]) { _, change in
-                self.writeProtocolEvent(InstallationProgressEvent(progress: change.newValue! * 100.0))
-            }
+    private func observeInstallProgress(installer: VZMacOSInstaller) {
+        DiavirtCommand.Global.installationObserver = installer.progress.observe(\.fractionCompleted, options: [.initial, .new]) { _, change in
+            self.writeProtocolEvent(InstallationProgressEvent(progress: change.newValue! * 100.0))
         }
+    }
 
-        private func onInstallComplete(result: Result<Void, Error>) {
-            writeProtocolEvent(StateEvent("runtime.installer.end"))
-            switch result {
-            case let .failure(error):
-                writeProtocolEvent(ErrorEvent(error))
-            case .success:
-                inhibitStopForRestart = true
-                writeProtocolEvent(StateEvent("runtime.started"))
-            }
+    private func onInstallComplete(result: Result<Void, Error>) {
+        writeProtocolEvent(StateEvent("runtime.installer.end"))
+        switch result {
+        case let .failure(error):
+            writeProtocolEvent(ErrorEvent(error))
+        case .success:
+            inhibitStopForRestart = true
+            writeProtocolEvent(StateEvent("runtime.started"))
         }
+    }
     #endif
 
     private func doActualStart() {

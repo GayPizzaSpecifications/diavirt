@@ -10,7 +10,7 @@ import Virtualization
 
 class DABuildState {
     #if arch(arm64)
-        var macRestoreImage: VZMacOSRestoreImage?
+    var macRestoreImage: VZMacOSRestoreImage?
     #endif
 }
 
@@ -18,9 +18,9 @@ extension DAVirtualMachineConfiguration {
     func preflight(wire: WireProtocol) async throws -> DABuildState {
         let state = DABuildState()
         #if arch(arm64)
-            if let macRestoreImage = macRestoreImage {
-                state.macRestoreImage = try await macRestoreImage.preflight(wire: wire)
-            }
+        if let macRestoreImage = macRestoreImage {
+            state.macRestoreImage = try await macRestoreImage.preflight(wire: wire)
+        }
         #endif
         return state
     }
@@ -101,10 +101,16 @@ extension DABootLoader {
             configuration.bootLoader = try linuxBootLoader.build()
         }
 
+        #if DIAVIRT_USE_PRIVATE_APIS
+        if let efiBootLoader = efiBootLoader {
+            configuration.bootLoader = try efiBootLoader.build()
+        }
+        #endif
+
         #if arch(arm64)
-            if let macOSBootLoader = macOSBootLoader {
-                configuration.bootLoader = try macOSBootLoader.build()
-            }
+        if let macOSBootLoader = macOSBootLoader {
+            configuration.bootLoader = try macOSBootLoader.build()
+        }
         #endif
     }
 }
@@ -127,11 +133,21 @@ extension DALinuxBootLoader {
 }
 
 #if arch(arm64)
-    extension DAMacOSBootLoader {
-        func build() throws -> VZMacOSBootLoader {
-            VZMacOSBootLoader()
-        }
+extension DAMacOSBootLoader {
+    func build() throws -> VZMacOSBootLoader {
+        VZMacOSBootLoader()
     }
+}
+#endif
+
+#if DIAVIRT_USE_PRIVATE_APIS
+extension DAEFIBootLoader {
+    func build() throws -> VZBootLoader {
+        let efiURL = URL(fileURLWithPath: firmwarePath)
+        let variableStoreURL = URL(fileURLWithPath: efiVariableStore.variableStorePath)
+        return try VZPrivateUtilities.createEfiBootLoader(efiURL: efiURL, variableStoreURL: variableStoreURL)
+    }
+}
 #endif
 
 extension DAPlatform {
@@ -141,9 +157,9 @@ extension DAPlatform {
         }
 
         #if arch(arm64)
-            if let macPlatform = macPlatform {
-                configuration.platform = try macPlatform.build(state: state)
-            }
+        if let macPlatform = macPlatform {
+            configuration.platform = try macPlatform.build(state: state)
+        }
         #endif
     }
 }
@@ -155,39 +171,39 @@ extension DAGenericPlatform {
 }
 
 #if arch(arm64)
-    extension DAMacPlatform {
-        func build(state: DABuildState) throws -> VZMacPlatformConfiguration {
-            let restoreImage = state.macRestoreImage!
-            let configuration = restoreImage.mostFeaturefulSupportedConfiguration!
-            let model = configuration.hardwareModel
-            let platform = VZMacPlatformConfiguration()
-            let auxilaryStorageURL = URL(fileURLWithPath: auxiliaryStoragePath)
-            let auxilaryStorage: VZMacAuxiliaryStorage
-            if !FileManager.default.fileExists(atPath: auxiliaryStoragePath) {
-                auxilaryStorage = try VZMacAuxiliaryStorage(creatingStorageAt: auxilaryStorageURL, hardwareModel: model, options: .allowOverwrite)
-            } else {
-                auxilaryStorage = VZMacAuxiliaryStorage(contentsOf: auxilaryStorageURL)
-            }
-
-            var machineIdentifier: VZMacMachineIdentifier?
-            if FileManager.default.fileExists(atPath: machineIdentifierPath) {
-                let data = try Data(contentsOf: URL(fileURLWithPath: machineIdentifierPath))
-                machineIdentifier = VZMacMachineIdentifier(dataRepresentation: data)
-            } else {
-                machineIdentifier = VZMacMachineIdentifier()
-                let dataToSave = machineIdentifier!.dataRepresentation
-                try dataToSave.write(to: URL(fileURLWithPath: machineIdentifierPath))
-            }
-
-            platform.auxiliaryStorage = auxilaryStorage
-            platform.hardwareModel = configuration.hardwareModel
-
-            if let machineIdentifier = machineIdentifier {
-                platform.machineIdentifier = machineIdentifier
-            }
-            return platform
+extension DAMacPlatform {
+    func build(state: DABuildState) throws -> VZMacPlatformConfiguration {
+        let restoreImage = state.macRestoreImage!
+        let configuration = restoreImage.mostFeaturefulSupportedConfiguration!
+        let model = configuration.hardwareModel
+        let platform = VZMacPlatformConfiguration()
+        let auxilaryStorageURL = URL(fileURLWithPath: auxiliaryStoragePath)
+        let auxilaryStorage: VZMacAuxiliaryStorage
+        if !FileManager.default.fileExists(atPath: auxiliaryStoragePath) {
+            auxilaryStorage = try VZMacAuxiliaryStorage(creatingStorageAt: auxilaryStorageURL, hardwareModel: model, options: .allowOverwrite)
+        } else {
+            auxilaryStorage = VZMacAuxiliaryStorage(contentsOf: auxilaryStorageURL)
         }
+
+        var machineIdentifier: VZMacMachineIdentifier?
+        if FileManager.default.fileExists(atPath: machineIdentifierPath) {
+            let data = try Data(contentsOf: URL(fileURLWithPath: machineIdentifierPath))
+            machineIdentifier = VZMacMachineIdentifier(dataRepresentation: data)
+        } else {
+            machineIdentifier = VZMacMachineIdentifier()
+            let dataToSave = machineIdentifier!.dataRepresentation
+            try dataToSave.write(to: URL(fileURLWithPath: machineIdentifierPath))
+        }
+
+        platform.auxiliaryStorage = auxilaryStorage
+        platform.hardwareModel = configuration.hardwareModel
+
+        if let machineIdentifier = machineIdentifier {
+            platform.machineIdentifier = machineIdentifier
+        }
+        return platform
     }
+}
 #endif
 
 extension DAStorageDevice {
@@ -507,54 +523,54 @@ extension DAUSBScreenCoordinatePointingDevice {
 }
 
 #if arch(arm64)
-    extension DAMacOSRestoreImage {
-        func preflight(wire: WireProtocol) async throws -> VZMacOSRestoreImage {
-            wire.writeProtocolEvent(StateEvent("preflight.macRestoreImage.start"))
-            var restoreImage: VZMacOSRestoreImage?
+extension DAMacOSRestoreImage {
+    func preflight(wire: WireProtocol) async throws -> VZMacOSRestoreImage {
+        wire.writeProtocolEvent(StateEvent("preflight.macRestoreImage.start"))
+        var restoreImage: VZMacOSRestoreImage?
 
-            if let latestSupportedRestoreImage = latestSupportedRestoreImage {
-                restoreImage = try await latestSupportedRestoreImage.preflight(wire: wire)
-            }
-
-            if let fileRestoreImage = fileRestoreImage {
-                restoreImage = try await fileRestoreImage.preflight()
-            }
-            wire.writeProtocolEvent(StateEvent("preflight.macRestoreImage.end"))
-            return restoreImage!
+        if let latestSupportedRestoreImage = latestSupportedRestoreImage {
+            restoreImage = try await latestSupportedRestoreImage.preflight(wire: wire)
         }
+
+        if let fileRestoreImage = fileRestoreImage {
+            restoreImage = try await fileRestoreImage.preflight()
+        }
+        wire.writeProtocolEvent(StateEvent("preflight.macRestoreImage.end"))
+        return restoreImage!
     }
+}
 
-    extension DALatestSupportedMacOSRestoreImage {
-        func preflight(wire: WireProtocol) async throws -> VZMacOSRestoreImage {
-            let imageRemote = try await VZMacOSRestoreImage.latestSupported
-            let semaphore = DispatchSemaphore(value: 0)
+extension DALatestSupportedMacOSRestoreImage {
+    func preflight(wire: WireProtocol) async throws -> VZMacOSRestoreImage {
+        let imageRemote = try await VZMacOSRestoreImage.latestSupported
+        let semaphore = DispatchSemaphore(value: 0)
 
-            var localFileURL: URL?
-            let task = URLSession.shared.downloadTask(with: imageRemote.url) { url, _, error in
-                if let error = error {
-                    wire.writeProtocolEvent(ErrorEvent(error))
-                    return
-                }
-
-                if let url = url {
-                    localFileURL = url
-                }
-                semaphore.signal()
+        var localFileURL: URL?
+        let task = URLSession.shared.downloadTask(with: imageRemote.url) { url, _, error in
+            if let error = error {
+                wire.writeProtocolEvent(ErrorEvent(error))
+                return
             }
 
-            let observer = task.progress.observe(\.fractionCompleted, options: [.initial, .new]) { _, change in
-                wire.writeProtocolEvent(InstallationDownloadProgressEvent(progress: change.newValue! * 100.0))
+            if let url = url {
+                localFileURL = url
             }
-            task.resume()
-            semaphore.wait()
-            observer.invalidate()
-            return try await VZMacOSRestoreImage.image(from: localFileURL!)
+            semaphore.signal()
         }
-    }
 
-    extension DAFileMacOSRestoreImage {
-        func preflight() async throws -> VZMacOSRestoreImage {
-            try await VZMacOSRestoreImage.image(from: URL(fileURLWithPath: restoreImagePath))
+        let observer = task.progress.observe(\.fractionCompleted, options: [.initial, .new]) { _, change in
+            wire.writeProtocolEvent(InstallationDownloadProgressEvent(progress: change.newValue! * 100.0))
         }
+        task.resume()
+        semaphore.wait()
+        observer.invalidate()
+        return try await VZMacOSRestoreImage.image(from: localFileURL!)
     }
+}
+
+extension DAFileMacOSRestoreImage {
+    func preflight() async throws -> VZMacOSRestoreImage {
+        try await VZMacOSRestoreImage.image(from: URL(fileURLWithPath: restoreImagePath))
+    }
+}
 #endif

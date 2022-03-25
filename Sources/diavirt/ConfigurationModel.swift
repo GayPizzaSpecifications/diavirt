@@ -29,6 +29,9 @@ struct DAVirtualMachineConfiguration: Codable {
 struct DABootLoader: Codable {
     let linuxBootLoader: DALinuxBootLoader?
     let macOSBootLoader: DAMacOSBootLoader?
+    #if DIAVIRT_USE_PRIVATE_APIS
+    let efiBootLoader: DAEFIBootLoader?
+    #endif
 }
 
 struct DALinuxBootLoader: Codable {
@@ -38,6 +41,17 @@ struct DALinuxBootLoader: Codable {
 }
 
 struct DAMacOSBootLoader: Codable {}
+
+#if DIAVIRT_USE_PRIVATE_APIS
+struct DAEFIBootLoader: Codable {
+    let firmwarePath: String
+    let efiVariableStore: DAEFIVariableStore
+}
+
+struct DAEFIVariableStore: Codable {
+    let variableStorePath: String
+}
+#endif
 
 struct DAPlatform: Codable {
     let genericPlatform: DAGenericPlatform?

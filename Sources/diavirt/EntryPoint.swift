@@ -32,20 +32,20 @@ struct DiavirtCommand: ParsableCommand {
     var rawMode: Bool = true
 
     #if arch(arm64)
-        @Flag(name: .long, inversion: .prefixedEnableDisable, help: "Enable Installer Mode")
-        var installerMode: Bool = false
+    @Flag(name: .long, inversion: .prefixedEnableDisable, help: "Enable Installer Mode")
+    var installerMode: Bool = false
 
-        @Flag(name: [
-            .customShort("i"),
-            .long
-        ], inversion: .prefixedEnableDisable, help: "Enable Automatic Installer Mode")
-        var autoInstallerMode: Bool = true
+    @Flag(name: [
+        .customShort("i"),
+        .long
+    ], inversion: .prefixedEnableDisable, help: "Enable Automatic Installer Mode")
+    var autoInstallerMode: Bool = true
 
-        @Flag(name: [
-            .customShort("m"),
-            .long
-        ])
-        var cannedMac: Bool = false
+    @Flag(name: [
+        .customShort("m"),
+        .long
+    ])
+    var cannedMac: Bool = false
     #endif
 
     func run() throws {
@@ -56,20 +56,20 @@ struct DiavirtCommand: ParsableCommand {
         var shouldViewerMode = viewerMode
 
         #if arch(arm64)
-            if cannedMac {
-                shouldEnableSignalPassing = false
-                shouldRawMode = false
-                shouldViewerMode = true
+        if cannedMac {
+            shouldEnableSignalPassing = false
+            shouldRawMode = false
+            shouldViewerMode = true
 
-                if !FileManager.default.fileExists(atPath: configFileURL.path) {
-                    try FileManager.default.createDirectory(at: configFileURL.deletingLastPathComponent(), withIntermediateDirectories: true)
-                    let canned = createCannedMac()
-                    let encoder = JSONEncoder()
-                    encoder.outputFormatting = .prettyPrinted
-                    let encoded = try encoder.encode(canned)
-                    try encoded.write(to: configFileURL)
-                }
+            if !FileManager.default.fileExists(atPath: configFileURL.path) {
+                try FileManager.default.createDirectory(at: configFileURL.deletingLastPathComponent(), withIntermediateDirectories: true)
+                let canned = createCannedMac()
+                let encoder = JSONEncoder()
+                encoder.outputFormatting = .prettyPrinted
+                let encoded = try encoder.encode(canned)
+                try encoded.write(to: configFileURL)
             }
+        }
         #endif
 
         let data = try Data(contentsOf: configFileURL)
@@ -77,9 +77,9 @@ struct DiavirtCommand: ParsableCommand {
         let configuration = try decoder.decode(DAVirtualMachineConfiguration.self, from: data)
 
         #if arch(arm64)
-            Global.machine = DAVirtualMachine(configuration, enableWireProtocol: wireProtocol, enableInstallerMode: installerMode, autoInstallerMode: autoInstallerMode)
+        Global.machine = DAVirtualMachine(configuration, enableWireProtocol: wireProtocol, enableInstallerMode: installerMode, autoInstallerMode: autoInstallerMode)
         #else
-            Global.machine = DAVirtualMachine(configuration, enableWireProtocol: wireProtocol)
+        Global.machine = DAVirtualMachine(configuration, enableWireProtocol: wireProtocol)
         #endif
 
         Global.enableSignalPassing = shouldEnableSignalPassing
