@@ -5,6 +5,7 @@
 //  Created by Kenneth Endfinger on 12/14/21.
 //
 
+import Combine
 import Foundation
 import Virtualization
 
@@ -284,6 +285,16 @@ extension DASerialPort {
             port = try virtioConsoleDevice.build()
         }
 
+        #if DIAVIRT_USE_PRIVATE_APIS
+        if let pl011SerialDevice = pl011SerialDevice {
+            port = try pl011SerialDevice.build()
+        }
+
+        if let p16550SerialDevice = p16550SerialDevice {
+            port = try p16550SerialDevice.build()
+        }
+        #endif
+
         port?.attachment = attachment!
         return port!
     }
@@ -332,6 +343,20 @@ extension DAVirtioConsoleDevice {
         VZVirtioConsoleDeviceSerialPortConfiguration()
     }
 }
+
+#if DIAVIRT_USE_PRIVATE_APIS
+extension DAPL011SerialDevice {
+    func build() throws -> VZSerialPortConfiguration {
+        VZPrivateUtilities.createPL011SerialPortConfiguration()
+    }
+}
+
+extension DA16550SerialDevice {
+    func build() throws -> VZSerialPortConfiguration {
+        VZPrivateUtilities.create16550SerialPortConfiguration()
+    }
+}
+#endif
 
 extension DAEntropyDevice {
     func build() throws -> VZEntropyDeviceConfiguration {
@@ -543,28 +568,30 @@ extension DAMacOSRestoreImage {
 extension DALatestSupportedMacOSRestoreImage {
     func preflight(wire: WireProtocol) async throws -> VZMacOSRestoreImage {
         let imageRemote = try await VZMacOSRestoreImage.latestSupported
-        let semaphore = DispatchSemaphore(value: 0)
+        var downloadProgressObserver: NSKeyValueObservation?
 
-        var localFileURL: URL?
-        let task = URLSession.shared.downloadTask(with: imageRemote.url) { url, _, error in
-            if let error = error {
-                wire.writeProtocolEvent(ErrorEvent(error))
-                return
+        wire.writeProtocolEvent(StateEvent("installation.download.start"))
+        let future: Future<URL?, Error> = Future { promise in
+            let task = URLSession.shared.downloadTask(with: imageRemote.url) { url, _, error in
+                if let error = error {
+                    promise(.failure(error))
+                    return
+                }
+                promise(.success(url))
             }
 
-            if let url = url {
-                localFileURL = url
+            downloadProgressObserver = task.progress.observe(\.fractionCompleted, options: [.initial, .new]) { _, change in
+                wire.writeProtocolEvent(InstallationDownloadProgressEvent(progress: change.newValue! * 100.0))
             }
-            semaphore.signal()
+            task.resume()
         }
 
-        let observer = task.progress.observe(\.fractionCompleted, options: [.initial, .new]) { _, change in
-            wire.writeProtocolEvent(InstallationDownloadProgressEvent(progress: change.newValue! * 100.0))
-        }
-        task.resume()
-        semaphore.wait()
-        observer.invalidate()
-        return try await VZMacOSRestoreImage.image(from: localFileURL!)
+        let temporaryFileUrl = try await future.value!
+        downloadProgressObserver?.invalidate()
+        wire.writeProtocolEvent(StateEvent("installation.download.end"))
+        let currentFileURL = URL(fileURLWithPath: "restore.ipsw")
+        try FileManager.default.moveItem(at: temporaryFileUrl, to: currentFileURL)
+        return try await VZMacOSRestoreImage.image(from: currentFileURL)
     }
 }
 

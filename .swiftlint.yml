@@ -11,4 +11,3 @@ disabled_rules:
 - file_length
 - function_body_length
 - opening_brace
-line_length: 190

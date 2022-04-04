@@ -7,6 +7,7 @@
 
 import Foundation
 
+#if arch(arm64)
 func createCannedMac() -> DAVirtualMachineConfiguration {
     DAVirtualMachineConfiguration(
         cpuCoreCount: 4,
@@ -90,3 +91,4 @@ func createCannedMac() -> DAVirtualMachineConfiguration {
         )
     )
 }
+#endif

@@ -23,7 +23,9 @@ struct DAVirtualMachineConfiguration: Codable {
     let socketDevices: [DASocketDevice]?
     let keyboardDevices: [DAKeyboardDevice]?
     let pointingDevices: [DAPointingDevice]?
+    #if arch(arm64)
     let macRestoreImage: DAMacOSRestoreImage?
+    #endif
 }
 
 struct DABootLoader: Codable {
@@ -82,6 +84,10 @@ struct DASerialPort: Codable {
     let stdioSerialAttachment: DAStdioSerialAttachment?
     let wireSerialAttachment: DAWireSerialAttachment?
     let virtioConsoleDevice: DAVirtioConsoleDevice?
+    #if DIAVIRT_USE_PRIVATE_APIS
+    let pl011SerialDevice: DAPL011SerialDevice?
+    let p16550SerialDevice: DA16550SerialDevice?
+    #endif
 }
 
 struct DAStdioSerialAttachment: Codable {}
@@ -91,6 +97,12 @@ struct DAWireSerialAttachment: Codable {
 }
 
 struct DAVirtioConsoleDevice: Codable {}
+
+#if DIAVIRT_USE_PRIVATE_APIS
+struct DAPL011SerialDevice: Codable {}
+
+struct DA16550SerialDevice: Codable {}
+#endif
 
 struct DAEntropyDevice: Codable {
     let virtioEntropyDevice: DAVirtioEntropyDevice?
@@ -174,6 +186,7 @@ struct DAPointingDevice: Codable {
 
 struct DAUSBScreenCoordinatePointingDevice: Codable {}
 
+#if arch(arm64)
 struct DAMacOSRestoreImage: Codable {
     let latestSupportedRestoreImage: DALatestSupportedMacOSRestoreImage?
     let fileRestoreImage: DAFileMacOSRestoreImage?
@@ -184,3 +197,4 @@ struct DALatestSupportedMacOSRestoreImage: Codable {}
 struct DAFileMacOSRestoreImage: Codable {
     let restoreImagePath: String
 }
+#endif

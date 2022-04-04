@@ -108,6 +108,6 @@ struct InstallationDownloadProgressEvent: WireEvent {
     }
 
     func toUserMessage() -> String? {
-        "Installer Download Progress: \(Int64(progress))%"
+        "Installer Download Progress: \(String(format: "%.4f", progress))%"
     }
 }
