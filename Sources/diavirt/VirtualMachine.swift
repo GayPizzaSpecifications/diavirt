@@ -106,7 +106,7 @@ class DAVirtualMachine: NSObject, WireProtocol, VZVirtualMachineDelegate {
     private func doActualStart() {
         DispatchQueue.main.async {
             #if DIAVIRT_USE_PRIVATE_APIS && arch(arm64)
-            let options = VZExtendedVirtualMachineStartOptions()
+            let options = self.configuration.extendedStartOptions?.toExtendedStartOptions() ?? VZExtendedVirtualMachineStartOptions()
             self.machine?.extendedStart(with: options, completionHandler: self.onMachineStart)
             #else
             self.machine?.start(completionHandler: self.onMachineStart)

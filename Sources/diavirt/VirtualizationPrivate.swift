@@ -14,6 +14,10 @@ import Virtualization
     init()
 }
 
+@objc protocol _VZUSBTouchScreenConfiguration {
+    init()
+}
+
 @objc protocol _VZMacKeyboardConfiguration {
     init()
 }
@@ -22,6 +26,10 @@ import Virtualization
     init()
 }
 #endif
+
+@objc protocol _VZUSBMassStorageDeviceConfiguration {
+    init(attachment: VZStorageDeviceAttachment)
+}
 
 @objc protocol _VZEFIBootLoader {
     init()
@@ -179,6 +187,14 @@ enum VZPrivateUtilities {
     static func createMacTrackpadConfiguration() -> VZPointingDeviceConfiguration {
         let macTrackpad = unsafeBitCast(NSClassFromString("_VZMacTrackpadConfiguration")!, to: _VZMacTrackpadConfiguration.Type.self).init()
         return unsafeBitCast(macTrackpad, to: VZPointingDeviceConfiguration.self)
+    }
+
+    static func createAppleTouchScreenConfiguration() -> _VZAppleTouchScreenConfiguration {
+        unsafeBitCast(NSClassFromString("_VZAppleTouchScreenConfiguration")!, to: _VZAppleTouchScreenConfiguration.Type.self).init()
+    }
+
+    static func createUSBTouchScreenConfiguration() -> _VZUSBTouchScreenConfiguration {
+        unsafeBitCast(NSClassFromString("_VZUSBTouchScreenConfiguration")!, to: _VZUSBTouchScreenConfiguration.Type.self).init()
     }
     #endif
 
