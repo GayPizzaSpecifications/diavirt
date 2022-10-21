@@ -2,7 +2,7 @@
 //  TerminalMode.swift
 //  diavirt
 //
-//  Created by Kenneth Endfinger on 12/18/21.
+//  Created by Alex Zenla on 12/18/21.
 //
 
 import Foundation

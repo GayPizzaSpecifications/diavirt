@@ -2,7 +2,7 @@
 //  ConfigurationBuilder.swift
 //  diavirt
 //
-//  Created by Kenneth Endfinger on 12/14/21.
+//  Created by Alex Zenla on 12/14/21.
 //
 
 import Combine
