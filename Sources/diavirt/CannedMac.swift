@@ -31,7 +31,8 @@ func createCannedMac() -> DAVirtualMachineConfiguration {
                     isReadOnly: false,
                     autoCreateSizeInBytes: UInt64(128 * 1024 * 1024 * 1024)
                 ),
-                virtioBlockDevice: .init()
+                virtioBlockDevice: .init(),
+                networkBlockDeviceAttachment: nil
             )
         ],
         serialPorts: [],

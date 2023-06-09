@@ -24,7 +24,7 @@ struct GlobalMachineView: View {
     var body: some View {
         VirtualMachineView(machine)
             .task {
-                self.machine = DiavirtCommand.Global.machine?.machine
+                machine = DiavirtCommand.Global.machine?.machine
             }
     }
 }

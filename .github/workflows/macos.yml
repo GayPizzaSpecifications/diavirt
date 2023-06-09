@@ -2,7 +2,7 @@ name: macOS
 on: [push]
 jobs:
   build:
-    runs-on: macos-11
+    runs-on: macos-13
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
@@ -16,14 +16,14 @@ jobs:
           name: diavirt
           path: diavirt
   format:
-    runs-on: macos-11
+    runs-on: macos-13
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2
       - name: Swift Format
         run: swiftformat --lint .
   lint:
-    runs-on: macos-11
+    runs-on: macos-13
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v2

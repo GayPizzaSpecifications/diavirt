@@ -122,7 +122,7 @@ class DAVirtualMachine: NSObject, WireProtocol, VZVirtualMachineDelegate {
             writeProtocolEvent(ErrorEvent(error))
         }
     }
-    
+
     private func onMachineStartWithOptions(error: Error?) {
         if let error {
             onMachineStart(result: .failure(error))

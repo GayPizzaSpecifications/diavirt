@@ -72,12 +72,18 @@ struct DAMacPlatform: Codable {
 struct DAStorageDevice: Codable {
     let diskImageAttachment: DADiskImageAttachment?
     let virtioBlockDevice: DAVirtioBlockDevice?
+    let networkBlockDeviceAttachment: DANetworkBlockDeviceAttachment?
 }
 
 struct DADiskImageAttachment: Codable {
     let imageFilePath: String
     let isReadOnly: Bool?
     let autoCreateSizeInBytes: UInt64?
+}
+
+struct DANetworkBlockDeviceAttachment: Codable {
+    let networkBlockDeviceUrl: String
+    let isForcedReadOnly: Bool?
 }
 
 struct DAVirtioBlockDevice: Codable {}

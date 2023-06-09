@@ -35,61 +35,61 @@ extension DAVirtualMachineConfiguration {
 
         if let storageDevices = storageDevices {
             for storageDevice in storageDevices {
-                configuration.storageDevices.append(try storageDevice.build(wire: wire))
+                try configuration.storageDevices.append(storageDevice.build(wire: wire))
             }
         }
 
         if let serialPorts = serialPorts {
             for serialPort in serialPorts {
-                configuration.serialPorts.append(try serialPort.build(wire: wire))
+                try configuration.serialPorts.append(serialPort.build(wire: wire))
             }
         }
 
         if let entropyDevices = entropyDevices {
             for entropyDevice in entropyDevices {
-                configuration.entropyDevices.append(try entropyDevice.build())
+                try configuration.entropyDevices.append(entropyDevice.build())
             }
         }
 
         if let memoryBalloonDevices = memoryBalloonDevices {
             for memoryBalloonDevice in memoryBalloonDevices {
-                configuration.memoryBalloonDevices.append(try memoryBalloonDevice.build())
+                try configuration.memoryBalloonDevices.append(memoryBalloonDevice.build())
             }
         }
 
         if let networkDevices = networkDevices {
             for networkDevice in networkDevices {
-                configuration.networkDevices.append(try networkDevice.build())
+                try configuration.networkDevices.append(networkDevice.build())
             }
         }
 
         if let graphicsDevices = graphicsDevices {
             for graphicsDevice in graphicsDevices {
-                configuration.graphicsDevices.append(try graphicsDevice.build())
+                try configuration.graphicsDevices.append(graphicsDevice.build())
             }
         }
 
         if let directorySharingDevices = directorySharingDevices {
             for directorySharingDevice in directorySharingDevices {
-                configuration.directorySharingDevices.append(try directorySharingDevice.build())
+                try configuration.directorySharingDevices.append(directorySharingDevice.build())
             }
         }
 
         if let socketDevices = socketDevices {
             for socketDevice in socketDevices {
-                configuration.socketDevices.append(try socketDevice.build())
+                try configuration.socketDevices.append(socketDevice.build())
             }
         }
 
         if let keyboardDevices = keyboardDevices {
             for keyboardDevice in keyboardDevices {
-                configuration.keyboards.append(try keyboardDevice.build())
+                try configuration.keyboards.append(keyboardDevice.build())
             }
         }
 
         if let pointingDevices = pointingDevices {
             for pointingDevice in pointingDevices {
-                configuration.pointingDevices.append(try pointingDevice.build())
+                try configuration.pointingDevices.append(pointingDevice.build())
             }
         }
         return configuration
@@ -224,6 +224,10 @@ extension DAStorageDevice {
             attachment = try diskImageAttachment.build(wire: wire)
         }
 
+        if let networkBlockDeviceAttachment = networkBlockDeviceAttachment {
+            attachment = try networkBlockDeviceAttachment.build()
+        }
+
         if let virtioBlockDevice = virtioBlockDevice {
             storage = try virtioBlockDevice.build(attachment: attachment!)
         }
@@ -267,6 +271,13 @@ extension DADiskImageAttachment {
         if result != 0 {
             fatalError("Failed to close the disk image.")
         }
+    }
+}
+
+extension DANetworkBlockDeviceAttachment {
+    func build() throws -> VZNetworkBlockDeviceStorageDeviceAttachment {
+        let url = URL(fileURLWithPath: networkBlockDeviceUrl)
+        return try VZNetworkBlockDeviceStorageDeviceAttachment(url: url)
     }
 }
 
@@ -368,7 +379,7 @@ extension DA16550SerialDevice {
 
 extension DAEntropyDevice {
     func build() throws -> VZEntropyDeviceConfiguration {
-        (try virtioEntropyDevice?.build())!
+        try (virtioEntropyDevice?.build())!
     }
 }
 
@@ -380,7 +391,7 @@ extension DAVirtioEntropyDevice {
 
 extension DAMemoryBalloonDevice {
     func build() throws -> VZMemoryBalloonDeviceConfiguration {
-        (try virtioTraditionalMemoryBalloonDevice?.build())!
+        try (virtioTraditionalMemoryBalloonDevice?.build())!
     }
 }
 
@@ -426,7 +437,7 @@ extension DAVirtioNetworkDevice {
 
 extension DAGraphicsDevice {
     func build() throws -> VZGraphicsDeviceConfiguration {
-        (try macGraphicsDevice?.build())!
+        try (macGraphicsDevice?.build())!
     }
 }
 
@@ -483,7 +494,7 @@ extension DADirectoryShare {
 
 extension DASingleDirectoryShare {
     func build() throws -> VZSingleDirectoryShare {
-        VZSingleDirectoryShare(directory: try directory.build())
+        try VZSingleDirectoryShare(directory: directory.build())
     }
 }
 
