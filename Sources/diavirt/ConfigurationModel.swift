@@ -25,10 +25,8 @@ struct DAVirtualMachineConfiguration: Codable {
     let pointingDevices: [DAPointingDevice]?
     #if arch(arm64)
     let macRestoreImage: DAMacOSRestoreImage?
-    #if DIAVIRT_USE_PRIVATE_APIS
-    let extendedStartOptions: DAExtendedStartOptions?
     #endif
-    #endif
+    let startOptions: DAStartOptions?
 }
 
 struct DABootLoader: Codable {
@@ -38,9 +36,7 @@ struct DABootLoader: Codable {
     let macOSBootLoader: DAMacOSBootLoader?
     #endif
 
-    #if DIAVIRT_USE_PRIVATE_APIS
     let efiBootLoader: DAEFIBootLoader?
-    #endif
 }
 
 struct DALinuxBootLoader: Codable {
@@ -53,16 +49,13 @@ struct DALinuxBootLoader: Codable {
 struct DAMacOSBootLoader: Codable {}
 #endif
 
-#if DIAVIRT_USE_PRIVATE_APIS
 struct DAEFIBootLoader: Codable {
-    let firmwarePath: String
     let efiVariableStore: DAEFIVariableStore
 }
 
 struct DAEFIVariableStore: Codable {
     let variableStorePath: String
 }
-#endif
 
 struct DAPlatform: Codable {
     let genericPlatform: DAGenericPlatform?
@@ -208,36 +201,14 @@ struct DAFileMacOSRestoreImage: Codable {
 }
 #endif
 
-#if DIAVIRT_USE_PRIVATE_APIS && arch(arm64)
-struct DAExtendedStartOptions: Codable {
-    var panicAction: Bool?
-    var stopInIBootStage1: Bool?
-    var stopInIBootStage2: Bool?
-    var bootMacOSRecovery: Bool?
-    var forceDFU: Bool?
+struct DAStartOptions: Codable {
+    #if arch(arm64)
+    var macOSStartOptions: DAMacOSStartOptions?
+    #endif
+}
 
-    func toExtendedStartOptions() -> VZExtendedVirtualMachineStartOptions {
-        let options = VZExtendedVirtualMachineStartOptions()
-        if let panicAction = panicAction {
-            options.panicAction = panicAction
-        }
-
-        if let stopInIBootStage1 = stopInIBootStage1 {
-            options.stopInIBootStage1 = stopInIBootStage1
-        }
-
-        if let stopInIBootStage2 = stopInIBootStage2 {
-            options.stopInIBootStage2 = stopInIBootStage2
-        }
-
-        if let bootMacOSRecovery = bootMacOSRecovery {
-            options.bootMacOSRecovery = bootMacOSRecovery
-        }
-
-        if let forceDFU = forceDFU {
-            options.forceDFU = forceDFU
-        }
-        return options
-    }
+#if arch(arm64)
+struct DAMacOSStartOptions: Codable {
+    var startUpFromMacOSRecovery: Bool?
 }
 #endif

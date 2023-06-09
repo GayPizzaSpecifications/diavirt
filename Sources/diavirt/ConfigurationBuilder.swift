@@ -141,15 +141,23 @@ extension DAMacOSBootLoader {
 }
 #endif
 
-#if DIAVIRT_USE_PRIVATE_APIS
-extension DAEFIBootLoader {
-    func build() throws -> VZBootLoader {
-        let efiURL = URL(fileURLWithPath: firmwarePath)
-        let variableStoreURL = URL(fileURLWithPath: efiVariableStore.variableStorePath)
-        return try VZPrivateUtilities.createEfiBootLoader(efiURL: efiURL, variableStoreURL: variableStoreURL)
+extension DAEFIVariableStore {
+    func build() throws -> VZEFIVariableStore {
+        let variableStoreURL = URL(fileURLWithPath: variableStorePath)
+        if FileManager.default.fileExists(atPath: variableStorePath) {
+            return VZEFIVariableStore(url: variableStoreURL)
+        }
+        return try VZEFIVariableStore(creatingVariableStoreAt: variableStoreURL)
     }
 }
-#endif
+
+extension DAEFIBootLoader {
+    func build() throws -> VZBootLoader {
+        let efiBootLoader = VZEFIBootLoader()
+        efiBootLoader.variableStore = try efiVariableStore.build()
+        return efiBootLoader
+    }
+}
 
 extension DAPlatform {
     func apply(to configuration: VZVirtualMachineConfiguration, state: DABuildState) throws {
@@ -547,7 +555,28 @@ extension DAUSBScreenCoordinatePointingDevice {
     }
 }
 
+extension DAStartOptions {
+    func build() -> VZVirtualMachineStartOptions? {
+        #if arch(arm64)
+        if let macOSStartOptions {
+            return macOSStartOptions.build()
+        }
+        #endif
+        return nil
+    }
+}
+
 #if arch(arm64)
+extension DAMacOSStartOptions {
+    func build() -> VZMacOSVirtualMachineStartOptions {
+        let options = VZMacOSVirtualMachineStartOptions()
+        if let startUpFromMacOSRecovery {
+            options.startUpFromMacOSRecovery = startUpFromMacOSRecovery
+        }
+        return options
+    }
+}
+
 extension DAMacOSRestoreImage {
     func preflight(wire: WireProtocol) async throws -> VZMacOSRestoreImage {
         wire.writeProtocolEvent(StateEvent("preflight.macRestoreImage.start"))

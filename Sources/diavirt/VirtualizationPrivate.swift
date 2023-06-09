@@ -76,81 +76,10 @@ import Virtualization
     init()
 }
 
-#if arch(arm64)
-@objc protocol _VZVirtualMachine {
-    @objc(_startWithOptions:completionHandler:)
-    func _start(with options: _VZVirtualMachineStartOptions) async throws
-
-    @objc(_startWithOptions:completionHandler:)
-    func _start(with options: _VZVirtualMachineStartOptions, completionHandler: @escaping (_ errorOrNil: Error?) -> Void)
-}
-
-@objc protocol _VZVirtualMachineStartOptions {
-    init()
-
-    var panicAction: Bool { get set }
-    var stopInIBootStage1: Bool { get set }
-    var stopInIBootStage2: Bool { get set }
-    var bootMacOSRecovery: Bool { get set }
-    var forceDFU: Bool { get set }
-}
-
-class VZExtendedVirtualMachineStartOptions {
-    var panicAction: Bool?
-    var stopInIBootStage1: Bool?
-    var stopInIBootStage2: Bool?
-    var bootMacOSRecovery: Bool?
-    var forceDFU: Bool?
-
-    func toActualOptions() -> _VZVirtualMachineStartOptions {
-        let options = unsafeBitCast(NSClassFromString("_VZVirtualMachineStartOptions")!, to: _VZVirtualMachineStartOptions.Type.self).init()
-
-        if let panicAction = panicAction {
-            options.panicAction = panicAction
-        }
-
-        if let stopInIBootStage1 = stopInIBootStage1 {
-            options.stopInIBootStage1 = stopInIBootStage1
-        }
-
-        if let stopInIBootStage2 = stopInIBootStage2 {
-            options.stopInIBootStage2 = stopInIBootStage2
-        }
-
-        if let bootMacOSRecovery = bootMacOSRecovery {
-            options.bootMacOSRecovery = bootMacOSRecovery
-        }
-
-        if let forceDFU = forceDFU {
-            options.forceDFU = forceDFU
-        }
-        return options
-    }
-}
-#endif
-
 extension VZVirtualMachineConfiguration {
     func setGdbDebugStub(_ gdb: _VZGDBDebugStubConfiguration) {
         unsafeBitCast(self, to: _VZVirtualMachineConfiguration.self)._debugStub = gdb
     }
-}
-
-extension VZVirtualMachine {
-    #if arch(arm64)
-    func extendedStart(with options: VZExtendedVirtualMachineStartOptions, completionHandler: @escaping (Result<Void, Error>) -> Void) {
-        unsafeBitCast(self, to: _VZVirtualMachine.self)._start(with: options.toActualOptions()) { errorOrNil in
-            if let error = errorOrNil {
-                completionHandler(.failure(error))
-            } else {
-                completionHandler(.success(()))
-            }
-        }
-    }
-
-    func extendedStart(with options: VZExtendedVirtualMachineStartOptions) async throws {
-        try await unsafeBitCast(self, to: _VZVirtualMachine.self)._start(with: options.toActualOptions())
-    }
-    #endif
 }
 
 enum VZPrivateUtilities {
@@ -166,37 +95,9 @@ enum VZPrivateUtilities {
         unsafeBitCast(NSClassFromString("_VZVNCAuthenticationSecurityConfiguration")!, to: _VZVNCAuthenticationSecurityConfiguration.Type.self).init(password: password)
     }
 
-    static func createEfiBootLoader(efiURL: URL, variableStoreURL: URL) throws -> VZBootLoader {
-        let efiBootLoader = unsafeBitCast(NSClassFromString("_VZEFIBootLoader")!, to: _VZEFIBootLoader.Type.self).init()
-        efiBootLoader.efiURL = efiURL
-        let variableStore = try unsafeBitCast(NSClassFromString("_VZEFIVariableStore")!, to: _VZEFIVariableStore.Type.self).init(URL: variableStoreURL)
-        efiBootLoader.variableStore = variableStore
-        return unsafeBitCast(efiBootLoader, to: VZBootLoader.self)
-    }
-
     static func createGdbDebugStub(_ port: Int) -> _VZGDBDebugStubConfiguration {
         unsafeBitCast(NSClassFromString("_VZGDBDebugStubConfiguration")!, to: _VZGDBDebugStubConfiguration.Type.self).init(port: port)
     }
-
-    #if arch(arm64)
-    static func createMacKeyboardConfiguration() -> VZKeyboardConfiguration {
-        let macKeyboard = unsafeBitCast(NSClassFromString("_VZMacKeyboardConfiguration")!, to: _VZMacKeyboardConfiguration.Type.self).init()
-        return unsafeBitCast(macKeyboard, to: VZKeyboardConfiguration.self)
-    }
-
-    static func createMacTrackpadConfiguration() -> VZPointingDeviceConfiguration {
-        let macTrackpad = unsafeBitCast(NSClassFromString("_VZMacTrackpadConfiguration")!, to: _VZMacTrackpadConfiguration.Type.self).init()
-        return unsafeBitCast(macTrackpad, to: VZPointingDeviceConfiguration.self)
-    }
-
-    static func createAppleTouchScreenConfiguration() -> _VZAppleTouchScreenConfiguration {
-        unsafeBitCast(NSClassFromString("_VZAppleTouchScreenConfiguration")!, to: _VZAppleTouchScreenConfiguration.Type.self).init()
-    }
-
-    static func createUSBTouchScreenConfiguration() -> _VZUSBTouchScreenConfiguration {
-        unsafeBitCast(NSClassFromString("_VZUSBTouchScreenConfiguration")!, to: _VZUSBTouchScreenConfiguration.Type.self).init()
-    }
-    #endif
 
     static func createPL011SerialPortConfiguration() -> VZSerialPortConfiguration {
         let serialPort = unsafeBitCast(NSClassFromString("_VZPL011SerialPortConfiguration")!, to: _VZPL011SerialPortConfiguration.Type.self).init()

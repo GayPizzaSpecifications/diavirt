@@ -89,7 +89,7 @@ func createCannedMac() -> DAVirtualMachineConfiguration {
             latestSupportedRestoreImage: .init(),
             fileRestoreImage: nil
         ),
-        extendedStartOptions: .init()
+        startOptions: .init()
     )
 }
 #endif

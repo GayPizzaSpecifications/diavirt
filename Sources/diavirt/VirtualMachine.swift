@@ -105,12 +105,12 @@ class DAVirtualMachine: NSObject, WireProtocol, VZVirtualMachineDelegate {
 
     private func doActualStart() {
         DispatchQueue.main.async {
-            #if DIAVIRT_USE_PRIVATE_APIS && arch(arm64)
-            let options = self.configuration.extendedStartOptions?.toExtendedStartOptions() ?? VZExtendedVirtualMachineStartOptions()
-            self.machine?.extendedStart(with: options, completionHandler: self.onMachineStart)
-            #else
-            self.machine?.start(completionHandler: self.onMachineStart)
-            #endif
+            let options = self.configuration.startOptions?.build()
+            if let options {
+                self.machine?.start(options: options, completionHandler: self.onMachineStartWithOptions)
+            } else {
+                self.machine?.start(completionHandler: self.onMachineStart)
+            }
         }
     }
 
@@ -120,6 +120,14 @@ class DAVirtualMachine: NSObject, WireProtocol, VZVirtualMachineDelegate {
             writeProtocolEvent(SimpleEvent(type: "started"))
         case let .failure(error):
             writeProtocolEvent(ErrorEvent(error))
+        }
+    }
+    
+    private func onMachineStartWithOptions(error: Error?) {
+        if let error {
+            onMachineStart(result: .failure(error))
+        } else {
+            onMachineStart(result: .success(()))
         }
     }
 
@@ -208,6 +216,10 @@ class DAVirtualMachine: NSObject, WireProtocol, VZVirtualMachineDelegate {
             return "resuming"
         case .stopping:
             return "stopping"
+        case .saving:
+            return "saving"
+        case .restoring:
+            return "restoring"
         @unknown default:
             return "unknown"
         }
