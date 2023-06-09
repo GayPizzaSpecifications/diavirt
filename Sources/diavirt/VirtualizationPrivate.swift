@@ -27,21 +27,6 @@ import Virtualization
 }
 #endif
 
-@objc protocol _VZUSBMassStorageDeviceConfiguration {
-    init(attachment: VZStorageDeviceAttachment)
-}
-
-@objc protocol _VZEFIBootLoader {
-    init()
-
-    var efiURL: URL { get @objc(setEfiURL:) set }
-    var variableStore: _VZEFIVariableStore { get @objc(setVariableStore:) set }
-}
-
-@objc protocol _VZEFIVariableStore {
-    init(URL: URL) throws
-}
-
 @objc protocol _VZGDBDebugStubConfiguration {
     init(port: Int)
 }

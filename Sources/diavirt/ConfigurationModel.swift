@@ -70,8 +70,9 @@ struct DAMacPlatform: Codable {
 }
 
 struct DAStorageDevice: Codable {
-    let diskImageAttachment: DADiskImageAttachment?
     let virtioBlockDevice: DAVirtioBlockDevice?
+    let usbMassStorageDevice: DAUSBMassStorageDevice?
+    let diskImageAttachment: DADiskImageAttachment?
     let networkBlockDeviceAttachment: DANetworkBlockDeviceAttachment?
 }
 
@@ -87,6 +88,8 @@ struct DANetworkBlockDeviceAttachment: Codable {
 }
 
 struct DAVirtioBlockDevice: Codable {}
+
+struct DAUSBMassStorageDevice: Codable {}
 
 struct DASerialPort: Codable {
     let stdioSerialAttachment: DAStdioSerialAttachment?

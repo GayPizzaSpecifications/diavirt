@@ -26,12 +26,13 @@ func createCannedMac() -> DAVirtualMachineConfiguration {
         ),
         storageDevices: [
             .init(
+                virtioBlockDevice: .init(),
+                usbMassStorageDevice: .init(),
                 diskImageAttachment: .init(
                     imageFilePath: "root.img",
                     isReadOnly: false,
                     autoCreateSizeInBytes: UInt64(128 * 1024 * 1024 * 1024)
                 ),
-                virtioBlockDevice: .init(),
                 networkBlockDeviceAttachment: nil
             )
         ],

@@ -231,6 +231,11 @@ extension DAStorageDevice {
         if let virtioBlockDevice = virtioBlockDevice {
             storage = try virtioBlockDevice.build(attachment: attachment!)
         }
+
+        if let usbMassStorageDevice = usbMassStorageDevice {
+            storage = try usbMassStorageDevice.build(attachment: attachment!)
+        }
+
         return storage!
     }
 }
@@ -284,6 +289,12 @@ extension DANetworkBlockDeviceAttachment {
 extension DAVirtioBlockDevice {
     func build(attachment: VZStorageDeviceAttachment) throws -> VZStorageDeviceConfiguration {
         VZVirtioBlockDeviceConfiguration(attachment: attachment)
+    }
+}
+
+extension DAUSBMassStorageDevice {
+    func build(attachment: VZStorageDeviceAttachment) throws -> VZStorageDeviceConfiguration {
+        VZUSBMassStorageDeviceConfiguration(attachment: attachment)
     }
 }
 
