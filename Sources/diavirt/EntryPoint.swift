@@ -111,14 +111,19 @@ struct DiavirtCommand: ParsableCommand {
         }
 
         Task {
-            try await Global.machine!.create()
+            do {
+                try await Global.machine!.create()
+            } catch {
+                DiavirtCommand.exit(withError: error)
+            }
+
             Global.machine?.start()
             Global.stateObserverHandle = Global.machine!.watchForState { state in
                 Task {
                     if state == .error {
                         DiavirtCommand.exit(withError: ExitCode.failure)
                     } else if state == .stopped {
-                        DiavirtCommand.exit(withError: ExitCode.success)
+                        // DiavirtCommand.exit(withError: ExitCode.success)
                     }
                 }
             }

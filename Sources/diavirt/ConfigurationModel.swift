@@ -140,6 +140,7 @@ struct DANATNetworkAttachment: Codable {}
 
 struct DAGraphicsDevice: Codable {
     let macGraphicsDevice: DAMacGraphicsDevice?
+    let virtioGraphicsDevice: DAVirtioGraphicsDevice?
 }
 
 struct DAMacGraphicsDevice: Codable {
@@ -150,6 +151,15 @@ struct DAMacGraphicsDisplay: Codable {
     let widthInPixels: Int
     let heightInPixels: Int
     let pixelsPerInch: Int
+}
+
+struct DAVirtioGraphicsScanout: Codable {
+    let widthInPixels: Int
+    let heightInPixels: Int
+}
+
+struct DAVirtioGraphicsDevice: Codable {
+    let scanouts: [DAVirtioGraphicsScanout]
 }
 
 struct DADirectorySharingDevice: Codable {

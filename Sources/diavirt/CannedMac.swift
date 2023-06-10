@@ -59,7 +59,8 @@ func createCannedMac() -> DAVirtualMachineConfiguration {
                             pixelsPerInch: 80
                         )
                     ]
-                )
+                ),
+                virtioGraphicsDevice: .init(scanouts: [])
             )
         ],
         directorySharingDevices: [

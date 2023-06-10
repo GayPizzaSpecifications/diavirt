@@ -448,7 +448,17 @@ extension DAVirtioNetworkDevice {
 
 extension DAGraphicsDevice {
     func build() throws -> VZGraphicsDeviceConfiguration {
-        try (macGraphicsDevice?.build())!
+        var device: VZGraphicsDeviceConfiguration?
+
+        if let macGraphicsDevice {
+            device = try macGraphicsDevice.build()
+        }
+
+        if let virtioGraphicsDevice {
+            device = try virtioGraphicsDevice.build()
+        }
+
+        return device!
     }
 }
 
@@ -466,6 +476,22 @@ extension DAMacGraphicsDisplay {
         VZMacGraphicsDisplayConfiguration(widthInPixels: widthInPixels,
                                           heightInPixels: heightInPixels,
                                           pixelsPerInch: pixelsPerInch)
+    }
+}
+
+extension DAVirtioGraphicsDevice {
+    func build() throws -> VZVirtioGraphicsDeviceConfiguration {
+        let device = VZVirtioGraphicsDeviceConfiguration()
+        let scanouts = try scanouts.map { scanout in try scanout.build() }
+        device.scanouts = scanouts
+        return device
+    }
+}
+
+extension DAVirtioGraphicsScanout {
+    func build() throws -> VZVirtioGraphicsScanoutConfiguration {
+        VZVirtioGraphicsScanoutConfiguration(widthInPixels: widthInPixels,
+                                             heightInPixels: heightInPixels)
     }
 }
 
