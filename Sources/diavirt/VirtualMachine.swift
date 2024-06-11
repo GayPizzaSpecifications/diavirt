@@ -1,5 +1,5 @@
 //
-//  Runtime.swift
+//  VirtualMachine.swift
 //  diavirt
 //
 //  Created by Alex Zenla on 12/13/21.
@@ -168,7 +168,7 @@ class DAVirtualMachine: NSObject, WireProtocol, VZVirtualMachineDelegate {
         try machine?.requestStop()
     }
 
-    func writeProtocolEvent<T>(_ event: T) where T: WireEvent {
+    func writeProtocolEvent(_ event: some WireEvent) {
         if !enableWireProtocol {
             if let message = event.toUserMessage() {
                 var data = message.data(using: .utf8)!

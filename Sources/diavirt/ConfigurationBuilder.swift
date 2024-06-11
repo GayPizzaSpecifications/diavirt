@@ -19,7 +19,7 @@ extension DAVirtualMachineConfiguration {
     func preflight(wire: WireProtocol) async throws -> DABuildState {
         let state = DABuildState()
         #if arch(arm64)
-        if let macRestoreImage = macRestoreImage {
+        if let macRestoreImage {
             state.macRestoreImage = try await macRestoreImage.preflight(wire: wire)
         }
         #endif
@@ -33,61 +33,61 @@ extension DAVirtualMachineConfiguration {
         configuration.cpuCount = cpuCoreCount
         configuration.memorySize = memorySizeInBytes
 
-        if let storageDevices = storageDevices {
+        if let storageDevices {
             for storageDevice in storageDevices {
                 try configuration.storageDevices.append(storageDevice.build(wire: wire))
             }
         }
 
-        if let serialPorts = serialPorts {
+        if let serialPorts {
             for serialPort in serialPorts {
                 try configuration.serialPorts.append(serialPort.build(wire: wire))
             }
         }
 
-        if let entropyDevices = entropyDevices {
+        if let entropyDevices {
             for entropyDevice in entropyDevices {
                 try configuration.entropyDevices.append(entropyDevice.build())
             }
         }
 
-        if let memoryBalloonDevices = memoryBalloonDevices {
+        if let memoryBalloonDevices {
             for memoryBalloonDevice in memoryBalloonDevices {
                 try configuration.memoryBalloonDevices.append(memoryBalloonDevice.build())
             }
         }
 
-        if let networkDevices = networkDevices {
+        if let networkDevices {
             for networkDevice in networkDevices {
                 try configuration.networkDevices.append(networkDevice.build())
             }
         }
 
-        if let graphicsDevices = graphicsDevices {
+        if let graphicsDevices {
             for graphicsDevice in graphicsDevices {
                 try configuration.graphicsDevices.append(graphicsDevice.build())
             }
         }
 
-        if let directorySharingDevices = directorySharingDevices {
+        if let directorySharingDevices {
             for directorySharingDevice in directorySharingDevices {
                 try configuration.directorySharingDevices.append(directorySharingDevice.build())
             }
         }
 
-        if let socketDevices = socketDevices {
+        if let socketDevices {
             for socketDevice in socketDevices {
                 try configuration.socketDevices.append(socketDevice.build())
             }
         }
 
-        if let keyboardDevices = keyboardDevices {
+        if let keyboardDevices {
             for keyboardDevice in keyboardDevices {
                 try configuration.keyboards.append(keyboardDevice.build())
             }
         }
 
-        if let pointingDevices = pointingDevices {
+        if let pointingDevices {
             for pointingDevice in pointingDevices {
                 try configuration.pointingDevices.append(pointingDevice.build())
             }
@@ -98,18 +98,18 @@ extension DAVirtualMachineConfiguration {
 
 extension DABootLoader {
     func apply(to configuration: VZVirtualMachineConfiguration, state _: DABuildState) throws {
-        if let linuxBootLoader = linuxBootLoader {
+        if let linuxBootLoader {
             configuration.bootLoader = try linuxBootLoader.build()
         }
 
         #if DIAVIRT_USE_PRIVATE_APIS
-        if let efiBootLoader = efiBootLoader {
+        if let efiBootLoader {
             configuration.bootLoader = try efiBootLoader.build()
         }
         #endif
 
         #if arch(arm64)
-        if let macOSBootLoader = macOSBootLoader {
+        if let macOSBootLoader {
             configuration.bootLoader = try macOSBootLoader.build()
         }
         #endif
@@ -121,12 +121,12 @@ extension DALinuxBootLoader {
         let kernelURL = URL(fileURLWithPath: kernelFilePath).absoluteURL
         let bootloader = VZLinuxBootLoader(kernelURL: kernelURL)
 
-        if let initialRamdiskPath = initialRamdiskPath {
+        if let initialRamdiskPath {
             let initialRamdiskURL = URL(fileURLWithPath: initialRamdiskPath).absoluteURL
             bootloader.initialRamdiskURL = initialRamdiskURL
         }
 
-        if let commandLine = commandLine {
+        if let commandLine {
             bootloader.commandLine = commandLine
         }
         return bootloader
@@ -161,12 +161,12 @@ extension DAEFIBootLoader {
 
 extension DAPlatform {
     func apply(to configuration: VZVirtualMachineConfiguration, state: DABuildState) throws {
-        if let genericPlatform = genericPlatform {
+        if let genericPlatform {
             configuration.platform = try genericPlatform.build()
         }
 
         #if arch(arm64)
-        if let macPlatform = macPlatform {
+        if let macPlatform {
             configuration.platform = try macPlatform.build(state: state)
         }
         #endif
@@ -187,11 +187,10 @@ extension DAMacPlatform {
         let model = configuration.hardwareModel
         let platform = VZMacPlatformConfiguration()
         let auxilaryStorageURL = URL(fileURLWithPath: auxiliaryStoragePath)
-        let auxilaryStorage: VZMacAuxiliaryStorage
-        if !FileManager.default.fileExists(atPath: auxiliaryStoragePath) {
-            auxilaryStorage = try VZMacAuxiliaryStorage(creatingStorageAt: auxilaryStorageURL, hardwareModel: model, options: .allowOverwrite)
+        let auxilaryStorage: VZMacAuxiliaryStorage = if !FileManager.default.fileExists(atPath: auxiliaryStoragePath) {
+            try VZMacAuxiliaryStorage(creatingStorageAt: auxilaryStorageURL, hardwareModel: model, options: .allowOverwrite)
         } else {
-            auxilaryStorage = VZMacAuxiliaryStorage(contentsOf: auxilaryStorageURL)
+            VZMacAuxiliaryStorage(contentsOf: auxilaryStorageURL)
         }
 
         var machineIdentifier: VZMacMachineIdentifier?
@@ -207,7 +206,7 @@ extension DAMacPlatform {
         platform.auxiliaryStorage = auxilaryStorage
         platform.hardwareModel = configuration.hardwareModel
 
-        if let machineIdentifier = machineIdentifier {
+        if let machineIdentifier {
             platform.machineIdentifier = machineIdentifier
         }
         return platform
@@ -220,19 +219,19 @@ extension DAStorageDevice {
         var attachment: VZStorageDeviceAttachment?
         var storage: VZStorageDeviceConfiguration?
 
-        if let diskImageAttachment = diskImageAttachment {
+        if let diskImageAttachment {
             attachment = try diskImageAttachment.build(wire: wire)
         }
 
-        if let networkBlockDeviceAttachment = networkBlockDeviceAttachment {
+        if let networkBlockDeviceAttachment {
             attachment = try networkBlockDeviceAttachment.build()
         }
 
-        if let virtioBlockDevice = virtioBlockDevice {
+        if let virtioBlockDevice {
             storage = try virtioBlockDevice.build(attachment: attachment!)
         }
 
-        if let usbMassStorageDevice = usbMassStorageDevice {
+        if let usbMassStorageDevice {
             storage = try usbMassStorageDevice.build(attachment: attachment!)
         }
 
@@ -245,7 +244,7 @@ extension DADiskImageAttachment {
         let url = URL(fileURLWithPath: imageFilePath).absoluteURL
 
         var wasDiskAllocated = false
-        if let autoCreateSizeInBytes = autoCreateSizeInBytes {
+        if let autoCreateSizeInBytes {
             if !FileManager.default.fileExists(atPath: url.path) {
                 let parentFileUrl = url.deletingLastPathComponent()
                 try FileManager.default.createDirectory(at: parentFileUrl, withIntermediateDirectories: true)
@@ -303,24 +302,24 @@ extension DASerialPort {
         var attachment: VZSerialPortAttachment?
         var port: VZSerialPortConfiguration?
 
-        if let stdioSerialAttachment = stdioSerialAttachment {
+        if let stdioSerialAttachment {
             attachment = try stdioSerialAttachment.build(wire: wire)
         }
 
-        if let wireSerialAttachment = wireSerialAttachment {
+        if let wireSerialAttachment {
             attachment = try wireSerialAttachment.build(wire: wire)
         }
 
-        if let virtioConsoleDevice = virtioConsoleDevice {
+        if let virtioConsoleDevice {
             port = try virtioConsoleDevice.build()
         }
 
         #if DIAVIRT_USE_PRIVATE_APIS
-        if let pl011SerialDevice = pl011SerialDevice {
+        if let pl011SerialDevice {
             port = try pl011SerialDevice.build()
         }
 
-        if let p16550SerialDevice = p16550SerialDevice {
+        if let p16550SerialDevice {
             port = try p16550SerialDevice.build()
         }
         #endif
@@ -417,11 +416,11 @@ extension DANetworkDevice {
         var attachment: VZNetworkDeviceAttachment?
         var device: VZNetworkDeviceConfiguration?
 
-        if let natNetworkAttachment = natNetworkAttachment {
+        if let natNetworkAttachment {
             attachment = try natNetworkAttachment.build()
         }
 
-        if let virtioNetworkDevice = virtioNetworkDevice {
+        if let virtioNetworkDevice {
             device = try virtioNetworkDevice.build()
         }
 
@@ -439,7 +438,7 @@ extension DANATNetworkAttachment {
 extension DAVirtioNetworkDevice {
     func build() throws -> VZVirtioNetworkDeviceConfiguration {
         let device = VZVirtioNetworkDeviceConfiguration()
-        if let macAddress = macAddress {
+        if let macAddress {
             device.macAddress = VZMACAddress(string: macAddress)!
         }
         return device
@@ -499,7 +498,7 @@ extension DADirectorySharingDevice {
     func build() throws -> VZDirectorySharingDeviceConfiguration {
         let share = try directoryShare.build()
         var device: VZDirectorySharingDeviceConfiguration?
-        if let virtioFileSystemDevice = virtioFileSystemDevice {
+        if let virtioFileSystemDevice {
             let fileSystemDevice = try virtioFileSystemDevice.build()
             fileSystemDevice.share = share
             device = fileSystemDevice
@@ -517,11 +516,11 @@ extension DAVirtioFileSystemDevice {
 extension DADirectoryShare {
     func build() throws -> VZDirectoryShare {
         var share: VZDirectoryShare?
-        if let singleDirectoryShare = singleDirectoryShare {
+        if let singleDirectoryShare {
             share = try singleDirectoryShare.build()
         }
 
-        if let multipleDirectoryShare = multipleDirectoryShare {
+        if let multipleDirectoryShare {
             share = try multipleDirectoryShare.build()
         }
 
@@ -553,7 +552,7 @@ extension DASocketDevice {
     func build() throws -> VZSocketDeviceConfiguration {
         var device: VZSocketDeviceConfiguration?
 
-        if let virtioSocketDevice = virtioSocketDevice {
+        if let virtioSocketDevice {
             device = try virtioSocketDevice.build()
         }
 
@@ -571,7 +570,7 @@ extension DAKeyboardDevice {
     func build() throws -> VZKeyboardConfiguration {
         var device: VZKeyboardConfiguration?
 
-        if let usbKeyboardDevice = usbKeyboardDevice {
+        if let usbKeyboardDevice {
             device = try usbKeyboardDevice.build()
         }
 
@@ -589,7 +588,7 @@ extension DAPointingDevice {
     func build() throws -> VZPointingDeviceConfiguration {
         var device: VZPointingDeviceConfiguration?
 
-        if let usbScreenCoordinatePointingDevice = usbScreenCoordinatePointingDevice {
+        if let usbScreenCoordinatePointingDevice {
             device = try usbScreenCoordinatePointingDevice.build()
         }
 
@@ -630,11 +629,11 @@ extension DAMacOSRestoreImage {
         wire.writeProtocolEvent(StateEvent("preflight.macRestoreImage.start"))
         var restoreImage: VZMacOSRestoreImage?
 
-        if let latestSupportedRestoreImage = latestSupportedRestoreImage {
+        if let latestSupportedRestoreImage {
             restoreImage = try await latestSupportedRestoreImage.preflight(wire: wire)
         }
 
-        if let fileRestoreImage = fileRestoreImage {
+        if let fileRestoreImage {
             restoreImage = try await fileRestoreImage.preflight()
         }
         wire.writeProtocolEvent(StateEvent("preflight.macRestoreImage.end"))
@@ -650,7 +649,7 @@ extension DALatestSupportedMacOSRestoreImage {
         wire.writeProtocolEvent(StateEvent("installation.download.start"))
         let future: Future<URL?, Error> = Future { promise in
             let task = URLSession.shared.downloadTask(with: imageRemote.url) { url, _, error in
-                if let error = error {
+                if let error {
                     promise(.failure(error))
                     return
                 }

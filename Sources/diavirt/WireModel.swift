@@ -23,10 +23,6 @@ protocol WireProtocol {
 struct SimpleEvent: WireEvent {
     var type: String
 
-    init(type: String) {
-        self.type = type
-    }
-
     func toUserMessage() -> String? {
         nil
     }
