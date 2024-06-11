@@ -4,11 +4,6 @@ diavirt implements all of the functionality of [Virtualization.framework](https:
 
 ## Usage
 
-### Install with Homebrew
-
-1. Install [Homebrew](https://brew.sh)
-2. Install diavirt with Homebrew: `brew install gaypizzaspecifications/made/diavirt`
-
 diavirt takes in a configuration file which describes how to build up the virtual machine configuration.
 
 ```json
@@ -16,15 +11,39 @@ diavirt takes in a configuration file which describes how to build up the virtua
   "cpuCoreCount": 2,
   "memorySizeInBytes": 2147483648,
   "platform": {
-    "genericPlatform": {}
-  },
-  "bootLoader": {
-    "linuxBootLoader": {
-      "kernelFilePath": "vmlinux",
-      "initialRamdiskPath": "initrd",
-      "commandLine": "console=hvc0 root=/dev/vda1"
+    "genericPlatform": {
+      "enableNestedVirtualization": true
     }
   },
+  "bootLoader": {
+    "efiBootLoader": {
+      "efiVariableStore": {
+        "variableStorePath": "efi.vars"
+      }
+    }
+  },
+  "graphicsDevices": [
+    {
+      "virtioGraphicsDevice": {
+        "scanouts": [
+          {
+            "widthInPixels": 1280,
+            "heightInPixels": 720
+          }
+        ]
+      }
+    }
+  ],
+  "keyboardDevices": [
+    {
+      "usbKeyboardDevice": {}
+    }
+  ],
+  "pointingDevices": [
+    {
+      "usbScreenCoordinatePointingDevice": {}
+    }
+  ],
   "serialPorts": [
     {
       "virtioConsoleDevice": {},
@@ -55,25 +74,12 @@ diavirt takes in a configuration file which describes how to build up the virtua
       "virtioNetworkDevice": {}
     }
   ],
-  "directorySharingDevices": [
-    {
-      "virtioFileSystemDevice": {
-        "tag": "mac-users"
-      },
-      "directoryShare": {
-        "singleDirectoryShare": {
-          "directory": {
-            "path": "/Users"
-          }
-        }
-      }
-    }
-  ]
+  "directorySharingDevices": []
 }
 ```
 
 To run diavirt with the specified configuration:
 
 ```sh
-$ diavirt -c machine.json
+$ diavirt -v -c machine.json
 ```

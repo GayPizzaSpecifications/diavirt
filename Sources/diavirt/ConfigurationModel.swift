@@ -62,7 +62,9 @@ struct DAPlatform: Codable {
     let macPlatform: DAMacPlatform?
 }
 
-struct DAGenericPlatform: Codable {}
+struct DAGenericPlatform: Codable {
+    var enableNestedVirtualization: Bool = false
+}
 
 struct DAMacPlatform: Codable {
     let auxiliaryStoragePath: String

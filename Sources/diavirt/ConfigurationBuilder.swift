@@ -175,7 +175,18 @@ extension DAPlatform {
 
 extension DAGenericPlatform {
     func build() throws -> VZGenericPlatformConfiguration {
-        VZGenericPlatformConfiguration()
+        let configuration = VZGenericPlatformConfiguration()
+        if #available(macOS 15.0, *) {
+            if !VZGenericPlatformConfiguration.isNestedVirtualizationSupported {
+                fatalError("Nested virtualization is not supported.")
+            }
+            configuration.isNestedVirtualizationEnabled = enableNestedVirtualization
+        } else {
+            if enableNestedVirtualization {
+                fatalError("Nested virtualization is not supported.")
+            }
+        }
+        return configuration
     }
 }
 
