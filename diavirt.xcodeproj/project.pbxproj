@@ -16,7 +16,7 @@
 		2A7518EC276EAC560032FC8B /* TerminalMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A7518EB276EAC560032FC8B /* TerminalMode.swift */; };
 		2AAE43B227E9B4F0005A8EE0 /* CannedMac.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AAE43B127E9B4F0005A8EE0 /* CannedMac.swift */; };
 		2AD7152227EE151E00EDD14E /* VirtualizationPrivate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AD7152127EE151E00EDD14E /* VirtualizationPrivate.swift */; };
-		FA53C98E2C181FEF005FEEFC /* ArgumentParser in Frameworks */ = {isa = PBXBuildFile; productRef = FA53C98D2C181FEF005FEEFC /* ArgumentParser */; };
+		FA906E9E2C19AF76005FFBF2 /* ArgumentParser in Frameworks */ = {isa = PBXBuildFile; productRef = FA906E9D2C19AF76005FFBF2 /* ArgumentParser */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -52,7 +52,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				FA53C98E2C181FEF005FEEFC /* ArgumentParser in Frameworks */,
+				FA906E9E2C19AF76005FFBF2 /* ArgumentParser in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -119,7 +119,7 @@
 			);
 			name = diavirt;
 			packageProductDependencies = (
-				FA53C98D2C181FEF005FEEFC /* ArgumentParser */,
+				FA906E9D2C19AF76005FFBF2 /* ArgumentParser */,
 			);
 			productName = diavirt;
 			productReference = 2A2A9C6E27678B000006C500 /* diavirt */;
@@ -150,7 +150,7 @@
 			);
 			mainGroup = 2A2A9C6527678B000006C500;
 			packageReferences = (
-				FA53C98C2C181FEF005FEEFC /* XCRemoteSwiftPackageReference "swift-argument-parser" */,
+				FA906E9C2C19AF76005FFBF2 /* XCRemoteSwiftPackageReference "swift-argument-parser" */,
 			);
 			productRefGroup = 2A2A9C6F27678B000006C500 /* Products */;
 			projectDirPath = "";
@@ -363,7 +363,7 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		FA53C98C2C181FEF005FEEFC /* XCRemoteSwiftPackageReference "swift-argument-parser" */ = {
+		FA906E9C2C19AF76005FFBF2 /* XCRemoteSwiftPackageReference "swift-argument-parser" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/apple/swift-argument-parser.git";
 			requirement = {
@@ -374,9 +374,9 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		FA53C98D2C181FEF005FEEFC /* ArgumentParser */ = {
+		FA906E9D2C19AF76005FFBF2 /* ArgumentParser */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = FA53C98C2C181FEF005FEEFC /* XCRemoteSwiftPackageReference "swift-argument-parser" */;
+			package = FA906E9C2C19AF76005FFBF2 /* XCRemoteSwiftPackageReference "swift-argument-parser" */;
 			productName = ArgumentParser;
 		};
 /* End XCSwiftPackageProductDependency section */
