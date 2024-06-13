@@ -13,6 +13,9 @@ struct DiavirtApp: App {
     var body: some Scene {
         WindowGroup {
             GlobalMachineView()
+                .onDisappear {
+                    exit(0)
+                }
         }
     }
 }
@@ -44,5 +47,6 @@ struct VirtualMachineView: NSViewRepresentable {
 
     func updateNSView(_ view: VZVirtualMachineView, context _: Context) {
         view.virtualMachine = virtualMachine
+        view.capturesSystemKeys = true
     }
 }
